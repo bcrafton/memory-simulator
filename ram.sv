@@ -1,11 +1,12 @@
+typedef bit [15:0] WORD;
 
 class mrqst_t;
-    int address;
-    int data;
+    WORD address;
+    WORD data;
     // letting this be randomized to whatever
     // will say anything that matches the time or is ahead of it ships
     int response_time;
-    function new(int address, int data);
+    function new(WORD address, WORD data);
     begin
         this.address = address;
         this.data = data;
@@ -72,7 +73,10 @@ module ram(
     output reg [15:0] rd_ret_address; // tag = address
     output reg        rd_ret_ack;
 
-    reg [15:0] mem [0:1023];
+    //reg [15:0] mem [0:1023];
+    // use an associative array instead of reg.
+    // saves memory and easier to use.
+    WORD mem [WORD];
 
     initial begin
         int i;
@@ -104,8 +108,8 @@ module ram(
             wr_rqst = wr_rqst_q.pop_front();
             
             wr_ret_ack = 1;
-            wr_ret_address <= wr_rqst.address;
-            mem[wr_rqst.address] <= wr_rqst.data;
+            wr_ret_address = wr_rqst.address;
+            mem[wr_rqst.address] = wr_rqst.data;
         end
         if(rd_rqst_q.size() > 0 && rd_rqst_q[0].response_time <= $time) begin
             // read from memory and respond
