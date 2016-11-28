@@ -1,0 +1,14 @@
+this is the todo file for this project
+
+currently we are adding a cache and a memory controller object to wrap everything up
+
+not sure if we want to use 1 object for memory requests
+or if the cache and ram can use the same one
+
+ram is 16 bit wide, 1024 (2^10 addressing) deep
+the cache will be 16 byte 8 slot = 128 byte
+
+so that means cache is 1/10 size of the ram
+which is fine
+
+it will also be direct mapped
