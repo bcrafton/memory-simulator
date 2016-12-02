@@ -15,24 +15,21 @@ static int func_calltf(char*user_data)
   vpiHandle vhandle, iterator, arg;
   s_vpi_value inval, outval;
   char* din = malloc(100); 
-  char* dout = malloc(100 * sizeof(s_vpi_vecval));
   vhandle = vpi_handle(vpiSysTfCall, NULL);
   iterator = vpi_iterate(vpiArgument, vhandle);
   arg = vpi_scan(iterator);
-
   inval.format = vpiHexStrVal;
   vpi_get_value(arg, &inval);
   din = inval.value.vector;
-
   vpi_printf("din=%s\n", din);
-  dout = din;
 
   outval.format = vpiVectorVal;
-  outval.value.vector = (p_vpi_vecval) malloc(sizeof(s_vpi_vecval) * 1);
+  outval.value.vector = (s_vpi_vecval*) malloc(sizeof(s_vpi_vecval) * 2);
   outval.value.vector[0].aval = 0xffffffff;
+  outval.value.vector[0].bval = 0;
   outval.value.vector[1].aval = 0xffffffff;
-  outval.value.vector[2].aval = 0xffffffff;
-  outval.value.vector[3].aval = 0xffffffff;
+  outval.value.vector[1].bval = 0;
+
   vpi_put_value(vhandle, &outval, NULL, vpiNoDelay);
 
   return 0;

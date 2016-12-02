@@ -57,7 +57,7 @@ module top;
     integer i = 0; 
     initial begin//always @(posedge clk) begin
                    
-        for(i=0; i<20; i++) begin
+        for(i=0; i<500; i++) begin
             #1 
             clk = ~clk;
             rd_address = rd_address + 1;
