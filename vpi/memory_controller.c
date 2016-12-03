@@ -1,22 +1,4 @@
-#include <vpi_user.h>
-#include "../Data-Structures/header/priority_queue.h"
-
-#define BITS_IN_INT 32
-#define MEMORY_SIZE 1024
-#define ADDRESS_WIDTH 16
-#define DATA_WIDTH 16
-#define ACK_WIDTH 1
-
-typedef struct rd_rqst_t{
-    unsigned short address;
-    unsigned long time;
-} rd_rqst_t;
-
-typedef struct wr_rqst_t{
-    unsigned short address;
-    unsigned short data;
-    unsigned long time;
-} wr_rqst_t;
+#include "memory_simulator.h"
 
 static unsigned short memory[MEMORY_SIZE];
 static PriorityQueue* rd_rqst_queue = NULL;

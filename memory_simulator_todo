@@ -3,4 +3,9 @@ check.sv cache for design details
 we are going to use vpi instead of system verilog
 vpi actualy works
 
-
+everything gonna need more thought
+the cache adds a new problem
+we need to minimize the functions being called on clk rise
+and the memory request needs to be able to feed cache
+and cache needs to be able to feed memory controller.
+going to rely heavily on queues and some policy
