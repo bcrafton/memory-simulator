@@ -23,16 +23,16 @@ typedef WORD unsigned short;
 typedef TIME unsigned long;
 typedef byte unsigned char;
 
-typedef struct rd_rqst_t{
+typedef struct cache_rd_rqst{
     WORD address;
     TIME time;
-} rd_rqst_t;
+} cache_rd_rqst_t;
 
-typedef struct wr_rqst_t{
+typedef struct cache_wr_rqst{
     WORD address;
     WORD data;
     TIME time;
-} wr_rqst_t;
+} cache_wr_rqst_t;
 
 typedef struct cache_line{
     // unsigned char flags

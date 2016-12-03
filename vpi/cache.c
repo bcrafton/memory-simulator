@@ -41,17 +41,37 @@ keep it simple, write+allocate, flush on a miss
 we may need an update function for every cycle...
 
 this whole project gonna need more through
+
+yeah so we need a update function
+no way to propagate thrugh the queues
+we need 4 queues
+
+i like calling the cache rd rqst function
+with the parameters
+as opposed to insrting something into its queue
+
+and need to figure out what we are gonna do about cache hits and cache misses...
+like what is the protocol
+fille the cache and simultaneously return the data
+or fill the cache and wait 4 cycles and retun the data?
+i think fill the cache line and then enter something into the out queue
+so have one out queue for hits and misses
+well we need something here.
+need to design the interface for this puppy before writing it
 */
 
 static cache_t;
 
-void rd_rqst_cache(rd_rqst_t* rqst)
+static PriorityQueue* rd_rqst_queue = NULL;
+static PriorityQueue* wr_rqst_queue = NULL;
+
+void cache_rd_rqst(WORD address, TIME time)
 {
     unsigned char tag = TAG(rqst->address);
-    unsigned char cacheline = CACHELINE(rqst->address);
+    unsigned char cache_line = CACHELINE(rqst->address);
     
     // cache hit
-    if(cache.lines[cacheline].tag == tag)
+    if(cache.lines[cache_line].tag == tag)
     {
     }
     // cache miss
@@ -62,8 +82,8 @@ void rd_rqst_cache(rd_rqst_t* rqst)
         // and want different queues.
         rd_rqst_memory(rqst);
     }
-    
 }
+
 
 
 

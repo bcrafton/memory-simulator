@@ -28,6 +28,7 @@ static int rd_rqst(char*user_data)
     unsigned int rd_address;
     unsigned int time_h;
     unsigned int time_l;
+    unsigned long current_time;
 
     iterator = vpi_iterate(vpiArgument, vhandle);
     
@@ -41,17 +42,10 @@ static int rd_rqst(char*user_data)
     vpi_get_value(arg, &inval);
     time_h = inval.value.time->high;
     time_l = inval.value.time->low;
-    
-    rd_rqst_t* rqst = (rd_rqst_t*) malloc(sizeof(rd_rqst_t));
-    rqst->address = rd_address;
-    rqst->time = (time_h << BITS_IN_INT) | time_l;
-    rqst->time = rqst->time + 10;
+    current_time = (time_h << BITS_IN_INT) | time_l;
 
-    priorityqueue_push(&rqst->time, rqst, rd_rqst_queue);
+    cache_rd_rqst(rd_address, current_time);
 
-    //vpi_printf("%d\n", priorityqueueIsEmpty(rd_rqst_queue));
-
-    //vpi_printf("%d %d\n", rqst->address, rqst->time);
     return 0; 
 }
 
@@ -71,6 +65,7 @@ static int wr_rqst(char*user_data)
     unsigned int wr_data;
     unsigned int time_h;
     unsigned int time_l;
+    unsigned long current_time;
 
     iterator = vpi_iterate(vpiArgument, vhandle);
     
@@ -90,15 +85,10 @@ static int wr_rqst(char*user_data)
     time_h = inval.value.time->high;
     time_l = inval.value.time->low;
     
-    wr_rqst_t* rqst = (wr_rqst_t*) malloc(sizeof(wr_rqst_t));
-    rqst->address = wr_address;
-    rqst->data = wr_data;
-    rqst->time = (time_h << BITS_IN_INT) | time_l;
-    rqst->time = rqst->time + 10;
+    current_time = (time_h << BITS_IN_INT) | time_l;
+    
+    cache_wr_rqst(wr_address, wr_data, current_time);
 
-    priorityqueue_push(&rqst->time, rqst, wr_rqst_queue);
-
-    //vpi_printf("%d %d %d\n", rqst->address, rqst->data, rqst->time);
     return 0; 
 }
 
@@ -161,13 +151,9 @@ static int rd_ret(char*user_data)
     }
 
     // this is poorly done
-    // we also could have just set address to be 10 bits
-    // then only used an integer
-    // or cud have just used an integer but increased the width?
-    // no actually int cannot be increased width need this
-    // ... unless we switched to 10 bits address
-    // this is actually better long term tho
-    // im prove this logic here tho
+    // changing to 10 bits and going integer wont work, inflexible when we change to 32
+    // only sized func can do more than 32 bit
+    // can fix logic tho
     unsigned long bus_out;
     bus_out = rd_ret_address;
     bus_out = (bus_out << DATA_WIDTH) | rd_ret_data;
