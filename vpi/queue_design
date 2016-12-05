@@ -276,15 +276,79 @@ instead of passing the time around i wonder if it would be better to call that f
 get simulation time
 
 
+---
+
+alright the big question
+is how do we handle cache returns
+do we need two separate queues?
+and give one precedence?
+
+then we have to deal with memory returns
+we acutally have to call that from the cahce
+which means we do in fact need update functions
+damn it man
+
+alright so lets think of this scenario
+
+cache rd rqst
+miss
+do we keep this rqst in the queue?
+or do we take it out
+wait for the update?
+ahhh its a hard question how to handle this thing damn it
+
+cud keep it in the rqst queue
+and have a priority queue function
+that has a bit called memory present
+and a time
+then u can sort by memory present and time
+
+or just add a request object back when the memory is present
+but i dont really like that 
+i dont think it shud leave the cache
+
+okay so that is decided
+
+so we only want to use one queue
+then we need a function that will deicde priority...
+
+so we can reshuffle as soon as we get data returned
+that wud be fine
+another question
+we may need to make a new data structure for this
+a priority queue is great for not this
+because we need to go into each one of the rqsts
+update them if the memory has changed
+and then rebuild the heap
+which means we need to be able to iterate through the prioirty it queue
+
+alright just think
+so rqst
 
 
+alright so we have a solution
+we are gonna use 2 linked lists for cahce misses
+and move cache misses to the miss queue
 
+we are also gonna need a set
+containing all the memory requests.
+so that we dont double requst 
+and we are gonna need one function
+that will go through
+and move the cache misses to the other queue with an updated return time
 
+this seems like a solid approach to me atleast
+dosnt seem to cumbersome
+or overdoing it
 
+i do not think cache line number shud be in cache line object
 
+who will handle keeping track of memory requests...
+will this be cache controller or what
+we shud only be able to make 1 memory requst per cycle
 
-
-
+i suppose memory wud be dual ported... so u cant really fuck up
+not true a write miss and a read miss cannot both make read requests.
 
 
 
