@@ -23,7 +23,13 @@ typedef WORD unsigned short;
 typedef TIME unsigned long;
 typedef byte unsigned char;
 
+// request objects
 typedef struct cache_rd_rqst{
+    WORD address;
+    TIME time;
+} cache_rd_rqst_t;
+
+typedef struct mem_rd_rqst{
     WORD address;
     TIME time;
 } cache_rd_rqst_t;
@@ -34,11 +40,41 @@ typedef struct cache_wr_rqst{
     TIME time;
 } cache_wr_rqst_t;
 
+typedef struct mem_wr_rqst{
+    WORD address;
+    WORD data;
+    TIME time;
+} cache_wr_rqst_t;
+
+// return objects
+typedef struct cache_rd_ret{
+    WORD address;
+    WORD data;
+    bool ack; // this is implied if calling a ret function
+} cache_rd_rqst_t;
+
+typedef struct mem_rd_ret{
+    cache_line_t* cache_line;
+    bool ack; // this is implied if calling a ret function
+} cache_rd_rqst_t;
+
+typedef struct cache_wr_ret{
+    WORD address;
+    bool ack;
+} cache_wr_rqst_t;
+
+typedef struct mem_wr_ret{
+    byte tag;
+    byte cache_line_number;
+    bool ack;
+} cache_wr_rqst_t;
+
 typedef struct cache_line{
     // unsigned char flags
     bool dirty; // 1 bit
     bool valid; // 1 bit
-    unsigned char tag; // 3 bits
+    byte tag; // 3 bits    
+    byte cache_line_number; // 4 bits
     WORD line[WORDS_PER_CACHE_LINE];
 } cache_line_t;
 

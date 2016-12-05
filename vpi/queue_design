@@ -1,0 +1,349 @@
+need to consider the queue design
+and establish some policy for the 4 queues that will be needed
+
+priority queue seems to be working just fine
+
+so 4 queues 8 functions need to be made
+
+read: controller -> cache
+write: controller -> cache
+
+read ret cache -> controller
+write ret cache -> controller
+
+read cache -> memory
+write cache -> memory
+
+read ret memory -> cache
+write ret memory -> cache
+
+the queues are just the things that connect
+
+controller -> cache
+cache -> controller
+
+cache -> memory
+memory -> cache
+
+the function will be defined in the thing owning the queue
+so adding something to the cache will call the cache
+with an address, timestamp, ect
+
+we will require that writes go to the cache before flushed out ... at first
+we will implement some policy in the cache -> controller queue to handle this
+will need a bit in the queue out saying memory available or something
+
+we will need to request chunks from cache to memory 
+and return cache lins
+what is the policy for requesting this
+i really dont think it matters and would be easy to change if we did it not 
+standard
+
+so what needs to be implmeneted the 8 functions
+4 queues
+how many struct/object types?
+
+cache_rd_rqst
+cache_rd_ret
+cache_wr_rqst
+cache_wr_ret
+
+mem_rd_rqst
+mem_rd_ret
+mem_wr_rqst
+mem_wr_ret
+
+then the functions to handle these objects
+so need 8 queues?
+is this necessary?
+
+we do actually need all of them and its 16 functions
+ugh...
+
+rd and wr and an object for each one damnit
+cud do just one object for all requests...
+ah this needs better design
+want to minimize the bs
+
+regardless we need some number of queues
+that much is certain
+
+no memory controller rqst queue
+cache request queue
+
+i believe we need to be able to push into other queues
+rdqst just calls cache
+wait 4 cycles
+is it here?
+no
+
+make memory rqst
+wait 100 cycles
+return cache line
+call cache return
+
+okay so we only need 4 cache queues and 2 memory queues
+and a function for each queue
+we do not need a memory controller queue at al
+would be overkill from cache
+so we need 6 functions
+and 6 queues 
+that is all
+
+wait no we dont even need 4 queues
+shudnt it just insantly put it in cache?
+yes
+okay cool
+4 queues
+just rqst queues
+then instantly return data to wherever it should be 
+nice
+
+functions unknown tho
+object just for each queue i guess
+
+4 structs
+4 queues
+how many functions
+
+cache_rd_rqst
+cache_rd_ret
+cache_wr_rqst
+cache_wr_ret
+
+mem_rd_rqst
+mem_rd_ret
+mem_wr_rqst
+mem_wr_ret
+
+need an update function
+not a return fuction
+but still need to handle these
+that is it tho
+and update the queues
+
+uh need a checker in the queue
+
+so all the rqst functions obviously
+4 rqst functions
+besies that tho we need to figure that out
+
+4 queues
+4 functions
+4 structs
+
+but then update functions
+what are the update functions tho
+
+need the return functions
+that will basically be called the update functions
+the cahce one is tricky
+
+can call it return tho
+
+is this the return function
+
+if cache miss
+    mem rqst
+else
+    return it
+
+so we ned ret function
+and we need special cahce funtions
+update functions?
+
+cache_rd_rqst_update()
+cache_rd_rqst_update()
+
+so the rst update will handle mem rqst and ret
+
+check or update
+
+how many objects tho
+so 10 functions
+4 queues
+how many objects
+
+atleast these
+rd rqst 
+wr rqst
+
+so ...
+make separate objects or same object?
+
+meh two objects
+
+cache_rd_rqst
+cache_rd_ret
+
+cache_wr_rqst
+cache_wr_ret
+
+cache_rd_check
+cache_wr_check
+
+mem_rd_rqst
+mem_rd_ret
+
+mem_wr_rqst
+mem_wr_ret
+
+
+10 functions
+4 structures
+4 queues
+
+good to go
+queues are contained no object passing, besides cachelines ... nice
+
+is returning a cache line okay?
+yeah
+yeah but 4 structs is the better design
+do need to tell memory how much we want
+
+otherwise we wud need to call a hash function
+it shud call a hash function
+give it an address
+it wont know what to do with a slot
+give it an address 
+it will call a hash function
+
+give it an address
+and a length
+
+give it an tag and a slot 
+oooohh i like that
+basically he same thing
+yeah through length in there.
+nah fuck the lenght it shud know
+
+okay we will do that
+do we need separate objects?
+yeah still do 
+
+wait who will call the cache return function
+we wud need to return an object
+ugh
+
+no we dont shut up
+actually yes we do
+but whatever
+
+okay so we atually need 8 return objects
+bu the memory contorller shud have no queues riht
+like the cache shud not pop many things before the controlelr can
+the controller pretty much just warps the cahce
+yeah because when cache returns it shud just return it not queue to mmeory controller nad out that wud be dumb
+okay we got it
+so actually 
+
+8 return objects
+10 functions
+4 queues
+
+the rqst fuction handle the cahce misses ...
+no they dont my bad
+
+
+fuck that we dont want the update functions
+8 functions 
+4 queues
+8 objects
+
+just use return functions to do it all
+
+cache_rd_rqst
+cache_rd_ret
+
+cache_wr_rqst
+cache_wr_ret
+
+mem_rd_rqst
+mem_rd_ret
+
+mem_wr_rqst
+mem_wr_ret
+
+4 rqst queues
+
+8 objects
+
+rqst
+ret
+all of them
+
+instead of passing the time around i wonder if it would be better to call that function to 
+get simulation time
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
