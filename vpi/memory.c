@@ -45,6 +45,7 @@ mem_rd_ret_t* mem_rd_ret(TIME current_time)
     mem_rd_rqst_t* rqst = (mem_rd_rqst_t*) priorityqueue_front(mem_rd_rqst_t);
     if(rqst->time <= time)
     {
+        // this is doing to much, it shud not be returning all this stuff to the cache, just the data.
         priorityqueue_pop(rd_rqst_queue);
         mem_rd_ret_t* ret = (mem_rd_ret_t*) malloc(sizeof(mem_rd_ret_t));
         cache_line_t* cache_line = (cache_line_t*) malloc(sizeof(cache_line_t));

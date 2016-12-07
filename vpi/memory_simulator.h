@@ -29,7 +29,7 @@ cache_rd_ret_t* cache_rd_ret(TIME current_time);
 cache_wr_ret* cache_wr_ret(TIME current_time);
 
 void mem_rd_rqst(byte tag, byte cache_line_number, TIME time);
-void mem_wr_rqst(cache_line_t* cache_line, TIME time);
+void mem_wr_rqst(WORD cache_line[], TIME time);
 mem_rd_ret_t* mem_rd_ret(TIME current_time);
 mem_wr_ret_t* mem_wr_ret(TIME current_time);
 
@@ -52,7 +52,9 @@ typedef struct cache_wr_rqst{
 } cache_wr_rqst_t;
 
 typedef struct mem_wr_rqst{
-    cache_line_t* cache_line
+    WORD data[WORDS_PER_CACHE_LINE];
+    byte tag;
+    byte cache_line_number;
     TIME time;
 } cache_wr_rqst_t;
 
@@ -64,7 +66,7 @@ typedef struct cache_rd_ret{
 } cache_rd_rqst_t;
 
 typedef struct mem_rd_ret{
-    cache_line_t* cache_line;
+    WORD data[WORDS_PER_CACHE_LINE];
     byte cache_line_number;
     bool ack;
 } cache_rd_rqst_t;
@@ -80,16 +82,23 @@ typedef struct mem_wr_ret{
     bool ack;
 } cache_wr_rqst_t;
 
+
+// so defining a cache_line is tricky. we really dont want to pass these things around.
+// just pass the data around.
+// i dont really want to need like a first bit, so unallocated guys are used first...
+// so we need an cache init function.
 typedef struct cache_line{
-    // unsigned char flags
-    bool dirty; // 1 bit, not as much of a problem with only 1 core
-    bool valid; // 1 bit
-    byte tag; // 3 bits
-    // DO NOT PUT CACHE LINE NUMBER IN HERE. IT IS IMPLIED IN A DIRECT MAPPED CACHE.
-    WORD line[WORDS_PER_CACHE_LINE];
+    bool dirty;
+    bool valid;
+    byte tag;
+    byte lru_next;
+    WORD data[WORDS_PER_CACHE_LINE];
 } cache_line_t;
 
 typedef struct cache{
     cache_line_t lines[NUM_CACHE_LINES];
+    byte lru; // lru
+    byte mru; // mru
 } cache_t;
+
 

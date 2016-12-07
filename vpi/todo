@@ -1,5 +1,3 @@
-i do not think cache line number shud be in cache line object
-
 change things from time to current_time
 
 we have to flush things out of the cache...
@@ -9,3 +7,12 @@ need things to update the cache and flush out memory...
 i guess the update function can sort of do this
 
 a write miss and a read miss cannot both make read requests same cycle
+
+- think we figured out the LRU policy and mem read returns and cache update thing.
+
+we need a set to figure out if a mem rd requst has already been made.
+    and not double issue these.
+
+i do not think cache line number shud be in cache line object
+need to sort out what a cache line is
+what it should contain and possible wrap it differently.

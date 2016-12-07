@@ -115,7 +115,7 @@ cache_wr_ret* cache_wr_ret(TIME current_time)
     
 }
 
-bool inCache(byte cache_line_number, byte tag)
+bool in_cache(byte cache_line_number, byte tag)
 {
     return cache.lines[cache_line_number].tag == tag;
 }
@@ -125,20 +125,76 @@ void cache_update(TIME current_time)
     mem_rd_ret_t* rd_ret = mem_rd_ret(current_time);
     mem_wr_ret_t* wr_ret = mem_wr_ret(current_time);
 
-    // move the cache misses back into valid request queue
+    // put the rd_ret into cache.
     
-    // whatever happens for a write.
 
-    // need to make write request if rd ret is valid
-    // because we will be flushing somehting
+    // move the cache misses back into valid request queue
+    if(rd_ret != NULL)
+    {
+        int i;
+        for(i=0; i<cache_rd_miss_queue.size; i++)
+        {
+            if(in_cache())
+            {
+                cache_rd_rqst_t* rqst = list_remove(i, cache_rd_miss_queue);
+                rqst.time = current_time + 4;
+                priorityqueue_push(rqst, rd_rqst_queue);
+            }
+        }
+
+        for(i=0; i<cache_wr_miss_queue.size; i++)
+        {
+            if(in_cache())
+            {
+                cache_wr_rqst_t* rqst = list_remove(i, cache_wr_miss_queue);
+                rqst.time = current_time + 4;
+                priorityqueue_push(rqst, wr_rqst_queue);
+            }
+        }
+    // if we flush something for a mem read response
+    // we need to make a mem write.
+    // we want to use LRU policy, how to implement this
+    
+    // some function returning cache line number.
+    // dont want to use a counter.
+    // we will use a linked list for the LRU policy.
+    // 0<-1<-2<-3<-4<-5<-6<-7
+    // head=0
+    // tail=7
+    // cache miss:
+    // flush 7, allocate for new cache line
+    // head 0.prev = 7
+    // head = tail 7
+    // tail = tail 7.prev 6
+    // basically something like this.
+        
+    }
+    
+    // dont know if we care about mem_rd_ret. 
 }
 
 
+void cache_init()
+{
+    int i;
+    for(i=0;i<NUM_CACHE_LINES;i++)
+    {
+        cache.lines[i].dirty = 0;
+        cache.lines[i].lru_next = i+1;
+    }
+    cache.lru = 0; 
+    cache.mru = NUM_CACHE_LINES-1;
+}
 
+byte get_lru()
+{
 
+}
 
-
-
+byte new_mru = cache.lru;
+cache.lru = cache.lines[cache.lru].next;
+cache.lines[cache.mru].next = new_mru;
+cache.mru = new_mru; 
 
 
 
