@@ -1,9 +1,9 @@
-#ifndef PRIORITYQUEUE_H_
-#define PRIORITYQUEUE_H_
+#ifndef PriorityList_H_
+#define PriorityList_H_
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <List.h>
+#include <assert.h>
 
 typedef void* KEY_TYPE;
 typedef void* VALUE_TYPE;
@@ -24,10 +24,10 @@ struct PriorityListNode{
 	PriorityListNode* prev;
 };
 
-Prioritylist* priority_list_constructor( int (*priority_list_compare_function)(void*, void*) );
-void priority_list_push(KEY_TYPE key, VALUE_TYPE value, Prioritylist *list);
-VALUE_TYPE priority_list_pop(Prioritylist *list);
-VALUE_TYPE priority_list_front(Prioritylist *list);
-int priority_list_empty(Prioritylist *list);
+PriorityList* priority_list_constructor( int (*priority_list_compare_function)(void*, void*) );
+void priority_list_push(KEY_TYPE key, VALUE_TYPE value, PriorityList *list);
+VALUE_TYPE priority_list_pop(PriorityList *list);
+VALUE_TYPE priority_list_front(PriorityList *list);
+int priority_list_empty(PriorityList *list);
 
 #endif

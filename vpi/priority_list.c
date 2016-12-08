@@ -1,13 +1,14 @@
 
 #include "priority_list.h"
 
-static int priority_list_size(Prioritylist *list);
+static int priority_list_size(PriorityList *list);
 
-Prioritylist* priority_list_constructor( int (*compare_function)(void*, void*) )
+PriorityList* priority_list_constructor( int (*compare_function)(void*, void*) )
 {
-	PriorityList* priority_list = (Prioritylist*) malloc(sizeof(Prioritylist));
-	priority_list->list = list_constructor();
+	PriorityList* priority_list = (PriorityList*) malloc(sizeof(PriorityList));
 	priority_list->compare_function = compare_function;
+	priority_list->head = NULL;
+	priority_list->tail= NULL;
 	return priority_list;
 }
 
@@ -21,7 +22,7 @@ PriorityListNode* priority_list_node_constructor(KEY_TYPE key, VALUE_TYPE value)
 }
 
 // I am skeptical of the correctness of this function
-void priority_list_push(KEY_TYPE key, VALUE_TYPE value, Prioritylist *list)
+void priority_list_push(KEY_TYPE key, VALUE_TYPE value, PriorityList *list)
 {
 	list->size++;
 	PriorityListNode* new_node = priority_list_node_constructor(key, value);
@@ -33,15 +34,16 @@ void priority_list_push(KEY_TYPE key, VALUE_TYPE value, Prioritylist *list)
 	else
 	{
 		PriorityListNode* ptr;
-		for(ptr=list->head; ptr=ptr->next; ptr != NULL)
+		for(ptr=list->head; ptr != NULL; ptr=ptr->next)
 		{
             // 3 cases, insert head, insert tail, insert middle
-			if( (*(list->compare_function))(new_node->key, ptr->key) < 0 )
+			if( ((*(list->compare_function))(new_node->key, ptr->key)) < 0 )
 			{
 				if(ptr->prev == NULL)
                 {
                     ptr->prev = new_node;
                     new_node->next = ptr;
+                    list->head = new_node;
                 }
                 else
                 {
@@ -56,13 +58,15 @@ void priority_list_push(KEY_TYPE key, VALUE_TYPE value, Prioritylist *list)
 			{
 				ptr->next = new_node;
 				new_node->prev = ptr;
+				list->tail = new_node;
+				break;
 			}
 		}
 	}
 
 }
 
-VALUE_TYPE priority_list_pop(Prioritylist *list)
+VALUE_TYPE priority_list_pop(PriorityList *list)
 {
 	assert(priority_list_size(list) == list->size);
 	assert(list->size != 0);
@@ -75,7 +79,7 @@ VALUE_TYPE priority_list_pop(Prioritylist *list)
 	return ret;
 }
 
-VALUE_TYPE priority_list_front(Prioritylist *list)
+VALUE_TYPE priority_list_front(PriorityList *list)
 {
 	assert(priority_list_size(list) == list->size);
 	assert(list->size != 0);
@@ -83,14 +87,14 @@ VALUE_TYPE priority_list_front(Prioritylist *list)
 	return list->head->value; 
 }
 
-int priority_list_empty(Prioritylist *list)
+int priority_list_empty(PriorityList *list)
 {
 	assert(priority_list_size(list) == list->size);
 
 	return list->size == 0;
 }
 
-static int priority_list_size(Prioritylist *list)
+static int priority_list_size(PriorityList *list)
 {
 	if(list->head == NULL && list->tail == NULL)
 	{
@@ -100,7 +104,7 @@ static int priority_list_size(Prioritylist *list)
 	{
 		int counter = 0;
 		PriorityListNode* ptr;
-		for(ptr=list->head; ptr=ptr->next; ptr != NULL)
+		for(ptr=list->head; ptr != NULL; ptr=ptr->next)
 		{
 			counter++;
 		}
