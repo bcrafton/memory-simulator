@@ -8,6 +8,10 @@ int tree_set_contains(SET_TYPE value, TreeSet* set){
 	return rbtree_contains(value, set->tree);
 }
 
+void tree_set_remove(KEY_TYPE key, TreeSet* set){
+    rbtree_remove(key, set->tree);
+}
+
 TreeSet* tree_set_constructor( int (*treeset_compare_function)(void*, void*) ){
 	TreeSet *set = malloc(sizeof(TreeSet));
 	set->tree = rbtree_constructor(treeset_compare_function);

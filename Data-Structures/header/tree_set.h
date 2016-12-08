@@ -14,7 +14,6 @@ struct TreeSet{
 
 void tree_set_put(SET_TYPE value, TreeSet* set);
 int tree_set_contains(SET_TYPE value, TreeSet* set);
+void tree_set_remove(KEY_TYPE key, TreeSet* set);
 TreeSet* tree_set_constructor( int (*treeset_compare_function)(void*, void*) );
-
-
 #endif

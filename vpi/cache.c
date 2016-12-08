@@ -5,14 +5,28 @@ static PriorityQueue* rd_rqst_queue = NULL;
 static PriorityQueue* wr_rqst_queue = NULL;
 static List* cache_rd_miss_queue = NULL;
 static List* cache_wr_miss_queue = NULL;
+static TreeSet* rd_rqsts = NULL;
+
+void cache_init()
+{
+    rd_rqst_queue = priorityqueue_constructor(&time_compare);
+    wr_rqst_queue = priorityqueue_constructor(&time_compare);
+    cache_rd_miss_queue = list_constructor();
+    cache_wr_miss_queue = list_constructor();
+    rd_rqsts = tree_set_constructor(something);
+
+    int i;
+    for(i=0;i<NUM_CACHE_LINES;i++)
+    {
+        cache.lines[i].dirty = 0;
+        cache.lines[i].lru_next = i+1;
+    }
+    cache.lru = 0; 
+    cache.mru = NUM_CACHE_LINES-1;
+}
 
 void cache_rd_rqst(WORD address, TIME time)
 {
-    if (rd_rqst_queue == NULL)
-    {
-        rd_rqst_queue = priorityqueue_constructor(&time_compare);
-    }
-
     unsigned char tag = TAG(rqst->address);
     unsigned char cache_line = CACHELINE(rqst->address);
     
@@ -25,11 +39,6 @@ void cache_rd_rqst(WORD address, TIME time)
 
 void cache_wr_rqst(WORD address, WORD data, TIME time)
 {
-    if (wr_rqst_queue == NULL)
-    {
-        wr_rqst_queue = priorityqueue_constructor(&time_compare);
-    }
-
     unsigned char tag = TAG(rqst->address);
     unsigned char cache_line = CACHELINE(rqst->address);
     
@@ -44,7 +53,7 @@ void cache_wr_rqst(WORD address, WORD data, TIME time)
 
 cache_rd_ret_t* cache_rd_ret(TIME current_time)
 {
-    if(rd_rqst_queue != NULL && priorityqueueIsEmpty(rd_rqst_queue))
+    if(priorityqueueIsEmpty(rd_rqst_queue))
     {
         return NULL;
     }
@@ -67,12 +76,9 @@ cache_rd_ret_t* cache_rd_ret(TIME current_time)
         }
         else
         {
-            if (cache_rd_miss_queue == NULL)
-            {
-                cache_rd_miss_queue = list_constructor();
-            }
             list_append(rqst, cache_rd_miss_queue);
-            // make the read request ... but we need to make sure we are not making double requests
+            // need to keep track of memory requests
+            // if(tree_set_contains())
             mem_rd_rqst(tag, cache_line_number, current_time);
         }
     }
@@ -81,7 +87,7 @@ cache_rd_ret_t* cache_rd_ret(TIME current_time)
 
 cache_wr_ret* cache_wr_ret(TIME current_time)
 {
-    if(wr_rqst_queue != NULL && priorityqueueIsEmpty(wr_rqst_queue))
+    if(priorityqueueIsEmpty(wr_rqst_queue))
     {
         return NULL;
     }
@@ -102,12 +108,9 @@ cache_wr_ret* cache_wr_ret(TIME current_time)
         }
         else
         {
-            if (cache_wr_miss_queue == NULL)
-            {
-                cache_wr_miss_queue = list_constructor();
-            }
             list_append(rqst, cache_wr_miss_queue);
-            // make the read request ... but we need to make sure we are not making double requests
+            // need to keep track of memory requests
+            // if(tree_set_contains())
             mem_rd_rqst(tag, cache_line_number, current_time);
         }
     }
@@ -151,50 +154,26 @@ void cache_update(TIME current_time)
                 priorityqueue_push(rqst, wr_rqst_queue);
             }
         }
-    // if we flush something for a mem read response
-    // we need to make a mem write.
-    // we want to use LRU policy, how to implement this
-    
-    // some function returning cache line number.
-    // dont want to use a counter.
-    // we will use a linked list for the LRU policy.
-    // 0<-1<-2<-3<-4<-5<-6<-7
-    // head=0
-    // tail=7
-    // cache miss:
-    // flush 7, allocate for new cache line
-    // head 0.prev = 7
-    // head = tail 7
-    // tail = tail 7.prev 6
-    // basically something like this.
         
+        byte lru = evict_lru();
+        short start_address = (cache.lines[lru].tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (lru << OFFSET_LOG2);
+        mem_wr_rqst(cache.lines[lru].data, start_address, lru, NUM_CACHE_LINES);
     }
-    
-    // dont know if we care about mem_rd_ret. 
 }
 
 
-void cache_init()
+
+
+byte evict_lru()
 {
-    int i;
-    for(i=0;i<NUM_CACHE_LINES;i++)
-    {
-        cache.lines[i].dirty = 0;
-        cache.lines[i].lru_next = i+1;
-    }
-    cache.lru = 0; 
-    cache.mru = NUM_CACHE_LINES-1;
+    byte evicted = cache.lru;
+    cache.lru = cache.lines[cache.lru].next;
+    cache.lines[cache.mru].next = evicted;
+    cache.mru = evicted;
+    return evicted;
 }
 
-byte get_lru()
-{
 
-}
-
-byte new_mru = cache.lru;
-cache.lru = cache.lines[cache.lru].next;
-cache.lines[cache.mru].next = new_mru;
-cache.mru = new_mru; 
 
 
 

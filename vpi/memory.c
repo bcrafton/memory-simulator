@@ -4,33 +4,31 @@ static unsigned short memory[MEMORY_SIZE];
 static PriorityQueue* rd_rqst_queue = NULL;
 static PriorityQueue* wr_rqst_queue = NULL;
 
-void mem_rd_rqst(byte tag, byte cache_line_number, TIME time)
+void mem_init()
 {
-    if (rd_rqst_queue == NULL)
-    {
-        rd_rqst_queue = priorityqueue_constructor(&time_compare);
-    }
+    rd_rqst_queue = priorityqueue_constructor(&time_compare);
+    wr_rqst_queue = priorityqueue_constructor(&time_compare);
+}
 
+void mem_rd_rqst(WORD start_address, byte size, TIME time)
+{
     unsigned char tag = TAG(rqst->address);
     unsigned char cache_line = CACHELINE(rqst->address);
     
     mem_rd_rqst_t* rqst = (mem_rd_rqst_t*) malloc(sizeof(mem_rd_rqst_t));
-    rqst->tag = tag;
-    rqst->cache_line_number = cache_line_number;
+    rqst->start_address = start_address;
+    rqst->size = size;
     rqst->time = time;
 
     priorityqueue_push(&rqst->time, rqst, rd_rqst_queue);
 }
 
-void mem_wr_rqst(cache_line_t* cache_line, TIME time)
+void mem_wr_rqst(WORD data[], WORD start_address, byte size, TIME time)
 {
-    if (wr_rqst_queue == NULL)
-    {
-        wr_rqst_queue = priorityqueue_constructor(&time_compare);
-    }
-
     mem_wr_rqst* rqst = (mem_wr_rqst*) malloc(sizeof(mem_wr_rqst));
-    rqst->cache_line = cache_line;
+    rqst->data = data;
+    rqst->start_address = start_address;
+    rqst->size = size;
     rqst->time = time;
 
     priorityqueue_push(&rqst->time, rqst, wr_rqst_queue);
@@ -38,7 +36,7 @@ void mem_wr_rqst(cache_line_t* cache_line, TIME time)
 
 mem_rd_ret_t* mem_rd_ret(TIME current_time)
 {
-    if(rd_rqst_queue != NULL && priorityqueueIsEmpty(rd_rqst_queue))
+    if(priorityqueueIsEmpty(rd_rqst_queue))
     {
         return NULL;
     }
@@ -65,7 +63,7 @@ mem_rd_ret_t* mem_rd_ret(TIME current_time)
 
 mem_wr_ret_t* mem_wr_ret(TIME current_time)
 {
-    if(wr_rqst_queue != NULL && priorityqueueIsEmpty(wr_rqst_queue))
+    if(priorityqueueIsEmpty(wr_rqst_queue))
     {
         return NULL;
     }
