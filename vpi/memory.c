@@ -12,8 +12,8 @@ void mem_init()
 
 void mem_rd_rqst(WORD start_address, byte size, TIME time)
 {
-    unsigned char tag = TAG(rqst->address);
-    unsigned char cache_line = CACHELINE(rqst->address);
+    byte tag = TAG(rqst->address);
+    byte cache_line = CACHELINE(rqst->address);
     
     mem_rd_rqst_t* rqst = (mem_rd_rqst_t*) malloc(sizeof(mem_rd_rqst_t));
     rqst->start_address = start_address;
@@ -82,3 +82,5 @@ mem_wr_ret_t* mem_wr_ret(TIME current_time)
     }
     return NULL;
 }
+
+

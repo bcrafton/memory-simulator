@@ -30,14 +30,22 @@ module memory_controller(
     output reg [15:0] rd_ret_address; // tag = address
     output reg        rd_ret_ack;
 
-    reg dumb;
+    reg vld_wr_rqst;
+    reg vld_rd_rqst;
+    reg vld_update;
+
+    initial begin
+        $init($time);
+    end
 
     always @(posedge clk) begin
+        vld_update = $update();
+
         if(wr_en) begin
-            dumb = $wr_rqst(wr_address, wr_data, $time);
+            vld_wr_rqst = $wr_rqst(wr_address, wr_data, $time);
         end
         if (rd_en) begin
-            dumb = $rd_rqst(rd_address, $time);
+            vld_rd_rqst = $rd_rqst(rd_address, $time);
         end
         
         {rd_ret_address, rd_ret_data, rd_ret_ack} = $rd_ret($time);

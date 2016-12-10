@@ -1,0 +1,13 @@
+call heirarchy
+
+cache read and write requests are both super easy
+that interface is already complete.
+
+update function and init functions are necessary unfortunately
+wish we cud make clk cycle 1/2 unit time only think in 1s
+
+we are calling the return functions every cycle...
+i gess there are some things that are better suited to an update function tho
+update shud be called first at the start of each cycle however...
+
+

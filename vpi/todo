@@ -1,18 +1,26 @@
 change things from time to current_time
-
-we have to flush things out of the cache...
-    means we need to make a policy.
-
-need things to update the cache and flush out memory...
-i guess the update function can sort of do this
-
+---------------------------------------------------------------------
 a write miss and a read miss cannot both make read requests same cycle
-
-- think we figured out the LRU policy and mem read returns and cache update thing.
-
+---------------------------------------------------------------------
 we need a set to figure out if a mem rd requst has already been made.
     and not double issue these.
-
+---------------------------------------------------------------------
 i do not think cache line number shud be in cache line object
 need to sort out what a cache line is
 what it should contain and possible wrap it differently.
+---------------------------------------------------------------------
+already did some stuff on work mahcine, so dont redo that work
+was basically fixing the structs and functions
+we need to figure out what gets called and the call tree and stuff from
+the memory controller code ... the wrapper.
+---------------------------------------------------------------------
+want to basically run through each scenario.
+    read rqst, cache miss, mem rqst
+    read rqst, cahce hit, ...
+---------------------------------------------------------------------
+FREE MEMORY
+---------------------------------------------------------------------
+WHY IS THIS SO MUCH EASIER THAN WATCHING LECTURES, BECAUSE
+    WE DONT ENGAGE WITH THE LECTURES OR TAKE NOTES...
+---------------------------------------------------------------------
+LETS PLAN TO JUST THROW CURRENT CODE IN WORK REPO OUT, IT IS BLOCKING

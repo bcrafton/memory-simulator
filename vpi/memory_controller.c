@@ -242,6 +242,58 @@ static int wr_ret(char*user_data)
     return 0; 
 }
 
+static int update(char*user_data)
+{    
+    // get the time
+    unsigned long current_time;
+
+    vpiHandle vhandle, iterator, arg;
+    vhandle = vpi_handle(vpiSysTfCall, NULL);
+
+    s_vpi_value inval;
+    
+    unsigned int time_h;
+    unsigned int time_l;
+
+    iterator = vpi_iterate(vpiArgument, vhandle);
+
+    arg = vpi_scan(iterator);
+    inval.format = vpiTimeVal;
+    vpi_get_value(arg, &inval);
+    time_h = inval.value.time->high;
+    time_l = inval.value.time->low;
+    current_time = (time_h << BITS_IN_INT) | time_l;
+
+    cache_update(current_time);
+    memory_update(current_time);
+}
+
+static int init(char*user_data)
+{    
+    // get the time
+    unsigned long current_time;
+
+    vpiHandle vhandle, iterator, arg;
+    vhandle = vpi_handle(vpiSysTfCall, NULL);
+
+    s_vpi_value inval;
+    
+    unsigned int time_h;
+    unsigned int time_l;
+
+    iterator = vpi_iterate(vpiArgument, vhandle);
+
+    arg = vpi_scan(iterator);
+    inval.format = vpiTimeVal;
+    vpi_get_value(arg, &inval);
+    time_h = inval.value.time->high;
+    time_l = inval.value.time->low;
+    current_time = (time_h << BITS_IN_INT) | time_l;
+
+    cache_init(current_time);
+    memory_init(current_time);
+}
+
 static int func_retsize()
 {
     return BITS_IN_INT;
@@ -299,10 +351,38 @@ void wr_ret_register()
     vpi_register_systf(&tf_data);
 }
 
+void update_register()
+{
+    s_vpi_systf_data tf_data;
+    tf_data.type        = vpiSysFunc;
+    tf_data.sysfunctype = vpiIntFunc;
+    tf_data.tfname    = "$update";
+    tf_data.calltf    = update;
+    tf_data.compiletf = func_compiletf;
+    tf_data.sizetf    = func_retsize;
+    tf_data.user_data = 0;
+    vpi_register_systf(&tf_data);
+}
+
+void init_register()
+{
+    s_vpi_systf_data tf_data;
+    tf_data.type        = vpiSysFunc;
+    tf_data.sysfunctype = vpiIntFunc;
+    tf_data.tfname    = "$init";
+    tf_data.calltf    = init;
+    tf_data.compiletf = func_compiletf;
+    tf_data.sizetf    = func_retsize;
+    tf_data.user_data = 0;
+    vpi_register_systf(&tf_data);
+}
+
 void (*vlog_startup_routines[])() = {
     rd_rqst_register,
     wr_rqst_register,
     rd_ret_register,
     wr_ret_register,
+    update_register,
+    init_register,
     0
 };

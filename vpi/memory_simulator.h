@@ -23,10 +23,12 @@ typedef WORD unsigned short;
 typedef TIME unsigned long;
 typedef byte unsigned char;
 
+void cache_init();
 void cache_rd_rqst(WORD address, TIME time);
 void cache_wr_rqst(WORD address, WORD data, TIME time);
 cache_rd_ret_t* cache_rd_ret(TIME current_time);
 cache_wr_ret* cache_wr_ret(TIME current_time);
+void cache_update(TIME current_time);
 
 void mem_rd_rqst(byte tag, byte cache_line_number, TIME time);
 void mem_wr_rqst(WORD cache_line[], TIME time);
@@ -62,24 +64,20 @@ typedef struct mem_wr_rqst{
 typedef struct cache_rd_ret{
     WORD address;
     WORD data;
-    bool ack;
 } cache_rd_rqst_t;
 
 typedef struct mem_rd_ret{
     WORD data[WORDS_PER_CACHE_LINE];
+    byte tag;
     byte cache_line_number;
-    bool ack;
 } cache_rd_rqst_t;
 
 typedef struct cache_wr_ret{
     WORD address;
-    bool ack;
 } cache_wr_rqst_t;
 
 typedef struct mem_wr_ret{
-    byte tag;
-    byte cache_line_number;
-    bool ack;
+    WORD start_address;
 } cache_wr_rqst_t;
 
 

@@ -7,6 +7,10 @@ static List* cache_rd_miss_queue = NULL;
 static List* cache_wr_miss_queue = NULL;
 static TreeSet* rd_rqsts = NULL;
 
+static bool in_cache(byte cache_line_number, byte tag);
+static bool mem_rd_rqst_not_pending();
+static byte evict_lru();
+
 void cache_init()
 {
     rd_rqst_queue = priorityqueue_constructor(&time_compare);
@@ -27,8 +31,8 @@ void cache_init()
 
 void cache_rd_rqst(WORD address, TIME time)
 {
-    unsigned char tag = TAG(rqst->address);
-    unsigned char cache_line = CACHELINE(rqst->address);
+    byte tag = TAG(rqst->address);
+    byte cache_line = CACHELINE(rqst->address);
     
     cache_rd_rqst_t* rqst = (cache_rd_ret*) malloc(sizeof(cache_rd_rqst));
     rqst->address = address;
@@ -39,8 +43,8 @@ void cache_rd_rqst(WORD address, TIME time)
 
 void cache_wr_rqst(WORD address, WORD data, TIME time)
 {
-    unsigned char tag = TAG(rqst->address);
-    unsigned char cache_line = CACHELINE(rqst->address);
+    byte tag = TAG(rqst->address);
+    byte cache_line = CACHELINE(rqst->address);
     
     cache_wr_rqst_t* rqst = (cache_wr_ret*) malloc(sizeof(cache_wr_rqst));
     rqst->address = address;
@@ -66,7 +70,7 @@ cache_rd_ret_t* cache_rd_ret(TIME current_time)
     if(rqst->time <= time)
     {
         priorityqueue_pop(rd_rqst_queue);
-        if(inCache(cache_line_number, tag))
+        if(in_cache(cache_line_number, tag))
         {
             cache_rd_ret_t* ret = (cache_rd_ret_t*) malloc(sizeof(cache_rd_ret_t));
             ret->address = rqst->address;
@@ -77,9 +81,10 @@ cache_rd_ret_t* cache_rd_ret(TIME current_time)
         else
         {
             list_append(rqst, cache_rd_miss_queue);
-            // need to keep track of memory requests
-            // if(tree_set_contains())
-            mem_rd_rqst(tag, cache_line_number, current_time);
+            if(mem_rd_rqst_not_pending(tag, cache_line_number))
+            {
+                mem_rd_rqst(tag, cache_line_number, current_time);
+            }
         }
     }
     return NULL;
@@ -99,7 +104,7 @@ cache_wr_ret* cache_wr_ret(TIME current_time)
     if(rqst->time <= time)
     {
         priorityqueue_pop(wr_rqst_queue);
-        if(inCache(cache_line_number, tag))
+        if(in_cache(cache_line_number, tag))
         {
             cache_wr_ret_t* ret = (cache_wr_ret_t*) malloc(sizeof(cache_wr_ret_t));
             ret->address = rqst->address;
@@ -109,27 +114,20 @@ cache_wr_ret* cache_wr_ret(TIME current_time)
         else
         {
             list_append(rqst, cache_wr_miss_queue);
-            // need to keep track of memory requests
-            // if(tree_set_contains())
-            mem_rd_rqst(tag, cache_line_number, current_time);
+            if(mem_rd_rqst_not_pending(tag, cache_line_number))
+            {
+                mem_rd_rqst(tag, cache_line_number, current_time);
+            }
         }
     }
     return NULL;
     
 }
 
-bool in_cache(byte cache_line_number, byte tag)
-{
-    return cache.lines[cache_line_number].tag == tag;
-}
-
 void cache_update(TIME current_time)
 {
     mem_rd_ret_t* rd_ret = mem_rd_ret(current_time);
     mem_wr_ret_t* wr_ret = mem_wr_ret(current_time);
-
-    // put the rd_ret into cache.
-    
 
     // move the cache misses back into valid request queue
     if(rd_ret != NULL)
@@ -155,16 +153,32 @@ void cache_update(TIME current_time)
             }
         }
         
+        // flush lru to open up cache line for new memory
         byte lru = evict_lru();
-        short start_address = (cache.lines[lru].tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (lru << OFFSET_LOG2);
+        unsigned short start_address = (cache.lines[lru].tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (lru << OFFSET_LOG2);
         mem_wr_rqst(cache.lines[lru].data, start_address, lru, NUM_CACHE_LINES);
+
+        // put the rd_ret into cache.
+        memcpy(cache.lines[rd_ret->cache_line_number], rd_ret->data, NUM_CACHE_LINES * sizeof(WORD));
+    }
+    if(wr_ret != NULL)
+    {
+        // we dont really care... we wud if we went certain the memory would be written properly
+        // in fact this is something we can come back and implement.
     }
 }
 
+static bool in_cache(byte cache_line_number, byte tag)
+{
+    return cache.lines[cache_line_number].tag == tag;
+}
 
+static bool mem_rd_rqst_not_pending()
+{
+    return 0;
+}
 
-
-byte evict_lru()
+static byte evict_lru()
 {
     byte evicted = cache.lru;
     cache.lru = cache.lines[cache.lru].next;
@@ -172,22 +186,6 @@ byte evict_lru()
     cache.mru = evicted;
     return evicted;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
