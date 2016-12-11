@@ -1,12 +1,5 @@
+
 #include "memory_simulator.h"
-
-static unsigned short memory[MEMORY_SIZE];
-static PriorityQueue* rd_rqst_queue = NULL;
-static PriorityQueue* wr_rqst_queue = NULL;
-
-int time_compare(void *o1, void *o2){
-	return *((unsigned long*)o1) - *((unsigned long*)o2);
-}
 
 static int func_compiletf(char*user_data)
 {
@@ -15,11 +8,6 @@ static int func_compiletf(char*user_data)
 
 static int rd_rqst(char*user_data)
 {
-    if (rd_rqst_queue == NULL)
-    {
-        rd_rqst_queue = priorityqueue_constructor(&time_compare);
-    }
-
     vpiHandle vhandle, iterator, arg;
     vhandle = vpi_handle(vpiSysTfCall, NULL);
 
@@ -51,11 +39,6 @@ static int rd_rqst(char*user_data)
 
 static int wr_rqst(char*user_data)
 {
-    if (wr_rqst_queue == NULL)
-    {
-        wr_rqst_queue = priorityqueue_constructor(&time_compare);
-    }
-
     vpiHandle vhandle, iterator, arg;
     vhandle = vpi_handle(vpiSysTfCall, NULL);
 
@@ -94,7 +77,6 @@ static int wr_rqst(char*user_data)
 
 static int rd_ret(char*user_data)
 {    
-
     // get the time
     unsigned long current_time;
 
@@ -120,40 +102,21 @@ static int rd_ret(char*user_data)
     unsigned int rd_ret_data;
     unsigned int rd_ret_ack;
 
-    if (rd_rqst_queue == NULL)
+    cache_rd_ret_t* ret = (cache_rd_ret_t*) cache_rd_ret(current_time);
+
+    if(ret != NULL)
     {
-        rd_ret_address = 0;
-        rd_ret_data = 0;
-        rd_ret_ack = 0;
-    }
-    else if (priorityqueueIsEmpty(rd_rqst_queue))
-    {
-        rd_ret_address = 0;
-        rd_ret_data = 0;
-        rd_ret_ack = 0;
+        rd_ret_address = ret->address;
+        rd_ret_data = ret->data;
+        rd_ret_ack = 1;
     }
     else
     {
-        rd_rqst_t* rqst = (rd_rqst_t*) priorityqueue_front(rd_rqst_queue);
-        if(rqst->time <= current_time)
-        {
-            priorityqueue_pop(rd_rqst_queue);
-            rd_ret_address = rqst->address;
-            rd_ret_data = memory[rqst->address];
-            rd_ret_ack = 1;
-        }
-        else
-        {
-            rd_ret_address = 0;
-            rd_ret_data = 0;
-            rd_ret_ack = 0; 
-        }
+        rd_ret_address = 0;
+        rd_ret_data = 0;
+        rd_ret_ack = 0;
     }
 
-    // this is poorly done
-    // changing to 10 bits and going integer wont work, inflexible when we change to 32
-    // only sized func can do more than 32 bit
-    // can fix logic tho
     unsigned long bus_out;
     bus_out = rd_ret_address;
     bus_out = (bus_out << DATA_WIDTH) | rd_ret_data;
@@ -199,37 +162,22 @@ static int wr_ret(char*user_data)
     unsigned int wr_ret_address;
     unsigned int wr_ret_ack;
 
-    if (wr_rqst_queue == NULL)
+    cache_wr_ret_t* ret = (cache_wr_ret_t*) cache_wr_ret(current_time);
+
+    if(ret != NULL)
     {
-        wr_ret_address = 0;
-        wr_ret_ack = 0;
-    }
-    else if (priorityqueueIsEmpty(wr_rqst_queue))
-    {
-        wr_ret_address = 0;
-        wr_ret_ack = 0;
+        wr_ret_address = ret->address;
+        wr_ret_ack = 1;
     }
     else
     {
-        wr_rqst_t* rqst = (wr_rqst_t*) priorityqueue_front(wr_rqst_queue);
-        if(rqst->time <= current_time)
-        {
-            priorityqueue_pop(wr_rqst_queue);
-            wr_ret_address = rqst->address;
-            wr_ret_ack = 1;
-            memory[rqst->address] = rqst->data;
-        }
-        else
-        {
-            wr_ret_address = 0;
-            wr_ret_ack = 0;
-        }
+        wr_ret_address = 0;
+        wr_ret_ack = 0;
     }
 
     unsigned long bus_out;
     bus_out = wr_ret_address;
     bus_out = (bus_out << ACK_WIDTH) | wr_ret_ack;
-    vpi_printf("%lx\n", bus_out);
 
     s_vpi_value out;
     out.format = vpiVectorVal;
@@ -243,7 +191,7 @@ static int wr_ret(char*user_data)
 }
 
 static int update(char*user_data)
-{    
+{
     // get the time
     unsigned long current_time;
 
@@ -265,7 +213,7 @@ static int update(char*user_data)
     current_time = (time_h << BITS_IN_INT) | time_l;
 
     cache_update(current_time);
-    memory_update(current_time);
+    //mem_update(current_time);
 }
 
 static int init(char*user_data)
@@ -290,8 +238,8 @@ static int init(char*user_data)
     time_l = inval.value.time->low;
     current_time = (time_h << BITS_IN_INT) | time_l;
 
-    cache_init(current_time);
-    memory_init(current_time);
+    cache_init();
+    mem_init();
 }
 
 static int func_retsize()
