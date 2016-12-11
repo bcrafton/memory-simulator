@@ -132,7 +132,7 @@ void cache_update(TIME current_time)
             if( in_cache(TAG(rd_ret->start_address), CACHELINE(rd_ret->start_address)) )
             {
                 cache_rd_rqst_t* rqst = (cache_rd_rqst_t*) list_remove(i, cache_rd_miss_queue);
-                rqst->time = current_time + 4;
+                rqst->time = current_time + CACHE_READ_TIME;
                 priorityqueue_push(&rqst->time, rqst, rd_rqst_queue);
             }
         }
@@ -142,7 +142,7 @@ void cache_update(TIME current_time)
             if( in_cache(TAG(wr_ret->start_address), CACHELINE(wr_ret->start_address)) )
             {
                 cache_wr_rqst_t* rqst = (cache_wr_rqst_t*) list_remove(i, cache_wr_miss_queue);
-                rqst->time = current_time + 4;
+                rqst->time = current_time + CACHE_WRITE_TIME;
                 priorityqueue_push(&rqst->time, rqst, wr_rqst_queue);
             }
         }
@@ -163,7 +163,7 @@ void cache_update(TIME current_time)
 
 static BOOL in_cache(BYTE cache_line_number, BYTE tag)
 {
-    return cache.lines[cache_line_number].tag == tag;
+    return (cache.lines[cache_line_number].tag == tag && cache.lines[cache_line_number].valid==1);
 }
 
 static BOOL mem_rd_rqst_pending(BYTE cache_line_number, BYTE tag)

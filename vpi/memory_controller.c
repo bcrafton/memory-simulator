@@ -121,7 +121,6 @@ static int rd_ret(char*user_data)
     bus_out = rd_ret_address;
     bus_out = (bus_out << DATA_WIDTH) | rd_ret_data;
     bus_out = (bus_out << ACK_WIDTH) | rd_ret_ack;
-    vpi_printf("%lx\n", bus_out);
 
     s_vpi_value out;
     out.format = vpiVectorVal;
