@@ -3,8 +3,8 @@
 
 static cache_t cache;
 
-static PriorityQueue* rd_rqst_queue = NULL;
-static PriorityQueue* wr_rqst_queue = NULL;
+static PriorityList* rd_rqst_queue = NULL;
+static PriorityList* wr_rqst_queue = NULL;
 static List* cache_rd_miss_queue = NULL;
 static List* cache_wr_miss_queue = NULL;
 
@@ -14,8 +14,8 @@ static BYTE evict_lru();
 
 void cache_init()
 {
-    rd_rqst_queue = priorityqueue_constructor(&time_compare);
-    wr_rqst_queue = priorityqueue_constructor(&time_compare);
+    rd_rqst_queue = priority_list_constructor(&time_compare);
+    wr_rqst_queue = priority_list_constructor(&time_compare);
     cache_rd_miss_queue = list_constructor();
     cache_wr_miss_queue = list_constructor();
 
@@ -35,7 +35,7 @@ void cache_rd_rqst(WORD address, TIME current_time)
     rqst->address = address;
     rqst->time = current_time + CACHE_READ_TIME;
 
-    priorityqueue_push(&rqst->time, rqst, rd_rqst_queue);
+    priority_list_push(&rqst->time, rqst, rd_rqst_queue);
 }
 
 void cache_wr_rqst(WORD address, WORD data, TIME current_time)
@@ -45,17 +45,17 @@ void cache_wr_rqst(WORD address, WORD data, TIME current_time)
     rqst->data = data;
     rqst->time = current_time + CACHE_WRITE_TIME;
 
-    priorityqueue_push(&rqst->time, rqst, wr_rqst_queue);
+    priority_list_push(&rqst->time, rqst, wr_rqst_queue);
 }
 
 cache_rd_ret_t* cache_rd_ret(TIME current_time)
 {
-    if(priorityqueueIsEmpty(rd_rqst_queue))
+    if(priority_list_empty(rd_rqst_queue))
     {
         return NULL;
     }
-    
-    cache_rd_rqst_t* rqst = (cache_rd_rqst_t*) priorityqueue_front(rd_rqst_queue);
+
+    cache_rd_rqst_t* rqst = (cache_rd_rqst_t*) priority_list_front(rd_rqst_queue);
     
     BYTE tag = TAG(rqst->address);
     BYTE cache_line_number = CACHELINE(rqst->address);
@@ -63,7 +63,7 @@ cache_rd_ret_t* cache_rd_ret(TIME current_time)
 
     if(rqst->time <= current_time)
     {
-        priorityqueue_pop(rd_rqst_queue);
+        priority_list_pop(rd_rqst_queue);
         if(in_cache(cache_line_number, tag))
         {
             cache_rd_ret_t* ret = (cache_rd_ret_t*) malloc(sizeof(cache_rd_ret_t));
@@ -86,19 +86,19 @@ cache_rd_ret_t* cache_rd_ret(TIME current_time)
 
 cache_wr_ret_t* cache_wr_ret(TIME current_time)
 {
-    if(priorityqueueIsEmpty(wr_rqst_queue))
+    if(priority_list_empty(wr_rqst_queue))
     {
         return NULL;
     }
 
-    cache_wr_rqst_t* rqst = (cache_wr_rqst_t*) priorityqueue_front(wr_rqst_queue);
+    cache_wr_rqst_t* rqst = (cache_wr_rqst_t*) priority_list_front(wr_rqst_queue);
 
     BYTE tag = TAG(rqst->address);
     BYTE cache_line_number = CACHELINE(rqst->address);
 
     if(rqst->time <= current_time)
     {
-        priorityqueue_pop(wr_rqst_queue);
+        priority_list_pop(wr_rqst_queue);
         if(in_cache(cache_line_number, tag))
         {
             cache_wr_ret_t* ret = (cache_wr_ret_t*) malloc(sizeof(cache_wr_ret_t));
@@ -133,7 +133,7 @@ void cache_update(TIME current_time)
             {
                 cache_rd_rqst_t* rqst = (cache_rd_rqst_t*) list_remove(i, cache_rd_miss_queue);
                 rqst->time = current_time + CACHE_READ_TIME;
-                priorityqueue_push(&rqst->time, rqst, rd_rqst_queue);
+                priority_list_push(&rqst->time, rqst, rd_rqst_queue);
             }
         }
 
@@ -143,7 +143,7 @@ void cache_update(TIME current_time)
             {
                 cache_wr_rqst_t* rqst = (cache_wr_rqst_t*) list_remove(i, cache_wr_miss_queue);
                 rqst->time = current_time + CACHE_WRITE_TIME;
-                priorityqueue_push(&rqst->time, rqst, wr_rqst_queue);
+                priority_list_push(&rqst->time, rqst, wr_rqst_queue);
             }
         }
         

@@ -9,6 +9,7 @@ PriorityList* priority_list_constructor( int (*compare_function)(void*, void*) )
 	priority_list->compare_function = compare_function;
 	priority_list->head = NULL;
 	priority_list->tail= NULL;
+	priority_list->size = 0;
 	return priority_list;
 }
 
@@ -70,12 +71,23 @@ VALUE_TYPE priority_list_pop(PriorityList *list)
 {
 	assert(priority_list_size(list) == list->size);
 	assert(list->size != 0);
-
-	list->size--;
+	
 	VALUE_TYPE ret = list->head->value;
-	list->head = list->head->next;
-	free(list->head->prev);
-	list->head->prev = NULL;
+	if(list->head == list->tail)
+	{
+		assert(list->size == 1);
+		free(list->head);
+		list->head = NULL;
+		list->tail = NULL;
+	}
+	else
+	{
+		assert(list->size > 1);
+		list->head = list->head->next;
+		free(list->head->prev);
+		list->head->prev = NULL;
+	}
+	list->size--;
 	return ret;
 }
 

@@ -15,12 +15,14 @@ void print_list(PriorityList* list)
     PriorityListNode* ptr;
     for(ptr=list->head; ptr != NULL; ptr=ptr->next)
     {
-        printf("%u\n", *(unsigned short*)ptr->value);
+        printf("%u|", *(unsigned short*)ptr->value);
     }
+    printf("   ");
     for(ptr=list->tail; ptr != NULL; ptr=ptr->prev)
     {
-        printf("%u\n", *(unsigned short*)ptr->value);
+        printf("%u|", *(unsigned short*)ptr->value);
     }
+    printf("\n");
 }
 
 int main()
@@ -39,7 +41,7 @@ int main()
     
     priority_list_push(&e.time, &e, list);
     // 2 3 5
-    printf("%lu\n", *(unsigned long*)priority_list_pop(list));
+    //printf("pop: %lu\n", *(unsigned long*)priority_list_pop(list));
     // 3 5
     priority_list_push(&a.time, &a, list);
     // 1 3 5
@@ -50,15 +52,30 @@ int main()
     priority_list_push(&g.time, &g, list);
     // 1 3 4 5 6
 
-    printf("%lu\n", *(unsigned long*)priority_list_pop(list));
+    printf("pop: %u\n", *(unsigned short*)priority_list_pop(list));
+    printf("pop: %u\n", *(unsigned short*)priority_list_pop(list));
+    print_list(list);
+    printf("pop: %u\n", *(unsigned short*)priority_list_pop(list));
+    print_list(list);
+    printf("pop: %u\n", *(unsigned short*)priority_list_pop(list));
+    print_list(list);
+    printf("pop: %u\n", *(unsigned short*)priority_list_pop(list));
+    print_list(list);
+    printf("pop: %u\n", *(unsigned short*)priority_list_pop(list));
+    print_list(list);
+    printf("pop: %u\n", *(unsigned short*)priority_list_pop(list));
     print_list(list);
 
+    priority_list_push(&d.time, &d, list);
+    priority_list_push(&f.time, &f, list);
+    
+    priority_list_push(&g.time, &g, list);
+    printf("%d\n", priority_list_empty(list));
+    printf("pop: %u\n", *(unsigned short*)priority_list_pop(list));
+    printf("pop: %u\n", *(unsigned short*)priority_list_pop(list));
+    printf("pop: %u\n", *(unsigned short*)priority_list_pop(list));
+    printf("%d\n", priority_list_empty(list));
 
-    printf("%lu\n", *(unsigned long*)priority_list_pop(list));
-    /*
-    printf("%lu\n", *(unsigned long*)priority_list_pop(list));
-    printf("%lu\n", *(unsigned long*)priority_list_pop(list));
-    printf("%lu\n", *(unsigned long*)priority_list_pop(list));
-    printf("%lu\n", *(unsigned long*)priority_list_pop(list));
-    */
+
+
 }

@@ -3,7 +3,7 @@ all: vpi compile run
 
 .PHONY: vpi
 vpi:
-	iverilog-vpi memory_controller.c cache.c memory.c memory_simulator.c ../Data-Structures/src/priority_queue.c ../Data-Structures/src/heap.c ../Data-Structures/src/vector.c ../Data-Structures/src/list.c
+	iverilog-vpi memory_controller.c cache.c memory.c memory_simulator.c ../Data-Structures/src/priority_queue.c ../Data-Structures/src/heap.c ../Data-Structures/src/vector.c ../Data-Structures/src/list.c priority_list.c
 
 .PHONY: compile
 compile:

@@ -4,6 +4,7 @@
 #include <string.h>
 #include "../Data-Structures/header/priority_queue.h"
 #include "../Data-Structures/header/list.h"
+#include "priority_list.h"
 
 #define BITS_IN_INT 32
 #define MEMORY_SIZE 1024

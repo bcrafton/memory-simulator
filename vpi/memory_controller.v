@@ -42,7 +42,7 @@ module memory_controller(
     end
 
     always @(posedge clk) begin
-        vld_update = $update($time);
+        //vld_update = $update($time);
 
         if(wr_en) begin
             //vld_wr_rqst = $wr_rqst(wr_address, wr_data, $time);
@@ -51,7 +51,7 @@ module memory_controller(
             vld_rd_rqst = $rd_rqst(rd_address, $time);
         end
         
-        {rd_ret_address, rd_ret_data, rd_ret_ack} = $rd_ret($time);
+        //{rd_ret_address, rd_ret_data, rd_ret_ack} = $rd_ret($time);
         //{wr_ret_address, wr_ret_ack} = $wr_ret($time);
     end
 
