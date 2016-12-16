@@ -10,7 +10,11 @@ static List* cache_wr_miss_queue = NULL;
 
 static BOOL in_cache(BYTE cache_line_number, BYTE tag);
 static BOOL mem_rd_rqst_pending(BYTE cache_line_number, BYTE tag);
+static void set_mem_rd_rqst_pending(BYTE cache_line_number, BYTE tag);
+static void clear_mem_rd_rqst_pending(BYTE cache_line_number, BYTE tag);
 static BYTE evict_lru();
+
+static short pending_mem_rd_rqsts[MEMORY_SIZE >> OFFSET_LOG2];
 
 void cache_init()
 {
@@ -34,7 +38,7 @@ void cache_rd_rqst(WORD address, TIME current_time)
     cache_rd_rqst_t* rqst = (cache_rd_rqst_t*) malloc(sizeof(cache_rd_rqst_t));
     rqst->address = address;
     rqst->time = current_time + CACHE_READ_TIME;
-    
+
     priority_list_push(&rqst->time, rqst, rd_rqst_queue);
 }
 
@@ -78,6 +82,7 @@ cache_rd_ret_t* cache_rd_ret(TIME current_time)
             {
                 WORD start_address = (tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (cache_line_number << OFFSET_LOG2);
                 mem_rd_rqst(start_address, current_time);
+                set_mem_rd_rqst_pending(tag, cache_line_number);
             }
         }
     }
@@ -112,6 +117,7 @@ cache_wr_ret_t* cache_wr_ret(TIME current_time)
             {
                 WORD start_address = (tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (cache_line_number << OFFSET_LOG2);
                 mem_rd_rqst(start_address, current_time);
+                set_mem_rd_rqst_pending(tag, cache_line_number);
             }
         }
     }
@@ -146,6 +152,8 @@ void cache_update(TIME current_time)
                 priority_list_push(&rqst->time, rqst, wr_rqst_queue);
             }
         }
+        // need to use the start address
+        clear_mem_rd_rqst_pending(tag, cache_line_number);
         
         // flush lru to open up cache line for new memory
         BYTE lru = evict_lru();
@@ -168,7 +176,23 @@ static BOOL in_cache(BYTE cache_line_number, BYTE tag)
 
 static BOOL mem_rd_rqst_pending(BYTE cache_line_number, BYTE tag)
 {
-    return 0;
+    WORD start_address = (tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (cache_line_number << OFFSET_LOG2);
+    unsigned int index = start_address >> OFFSET_LOG2;
+    return pending_mem_rd_rqsts[index];
+}
+
+static void set_mem_rd_rqst_pending(BYTE cache_line_number, BYTE tag)
+{
+    WORD start_address = (tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (cache_line_number << OFFSET_LOG2);
+    unsigned int index = start_address >> OFFSET_LOG2;
+    pending_mem_rd_rqsts[index] = 1;
+}
+
+static void clear_mem_rd_rqst_pending(BYTE cache_line_number, BYTE tag)
+{
+    WORD start_address = (tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (cache_line_number << OFFSET_LOG2);
+    unsigned int index = start_address >> OFFSET_LOG2;
+    pending_mem_rd_rqsts[index] = 0;
 }
 
 static BYTE evict_lru()
