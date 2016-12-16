@@ -34,7 +34,7 @@ void cache_rd_rqst(WORD address, TIME current_time)
     cache_rd_rqst_t* rqst = (cache_rd_rqst_t*) malloc(sizeof(cache_rd_rqst_t));
     rqst->address = address;
     rqst->time = current_time + CACHE_READ_TIME;
-
+    
     priority_list_push(&rqst->time, rqst, rd_rqst_queue);
 }
 

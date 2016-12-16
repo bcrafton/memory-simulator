@@ -20,6 +20,7 @@ PriorityListNode* priority_list_node_constructor(KEY_TYPE key, VALUE_TYPE value)
 	new_node->value = value;
 	new_node->next = NULL;
 	new_node->prev = NULL;
+	return new_node;
 }
 
 // I am skeptical of the correctness of this function
@@ -27,17 +28,18 @@ void priority_list_push(KEY_TYPE key, VALUE_TYPE value, PriorityList *list)
 {
 	list->size++;
 	PriorityListNode* new_node = priority_list_node_constructor(key, value);
+	
 	if(list->head == NULL && list->tail == NULL)
 	{
 		list->head = new_node;
 		list->tail = new_node;
 	}
 	else
-	{
+	{	
 		PriorityListNode* ptr;
 		for(ptr=list->head; ptr != NULL; ptr=ptr->next)
 		{
-            // 3 cases, insert head, insert tail, insert middle
+			// 3 cases, insert head, insert tail, insert middle
 			if( ((*(list->compare_function))(new_node->key, ptr->key)) < 0 )
 			{
 				if(ptr->prev == NULL)
@@ -64,7 +66,6 @@ void priority_list_push(KEY_TYPE key, VALUE_TYPE value, PriorityList *list)
 			}
 		}
 	}
-
 }
 
 VALUE_TYPE priority_list_pop(PriorityList *list)
