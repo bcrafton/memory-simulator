@@ -1,13 +1,9 @@
 
 #include "memory_simulator.h"
 
-static int func_compiletf(char*user_data)
+static PLI_INT32 rd_rqst(char* user_data)
 {
-    return 0;
-}
-
-static int rd_rqst(char*user_data)
-{
+    assert(user_data == NULL);
     vpiHandle vhandle, iterator, arg;
     vhandle = vpi_handle(vpiSysTfCall, NULL);
 
@@ -30,15 +26,17 @@ static int rd_rqst(char*user_data)
     vpi_get_value(arg, &inval);
     time_h = inval.value.time->high;
     time_l = inval.value.time->low;
-    current_time = (time_h << BITS_IN_INT) | time_l;
+    current_time = time_h;
+    current_time = (current_time << BITS_IN_INT) | time_l;
 
     cache_rd_rqst(rd_address, current_time);
 
     return 0; 
 }
 
-static int wr_rqst(char*user_data)
+static PLI_INT32 wr_rqst(char* user_data)
 {
+    assert(user_data == NULL);
     vpiHandle vhandle, iterator, arg;
     vhandle = vpi_handle(vpiSysTfCall, NULL);
 
@@ -68,15 +66,18 @@ static int wr_rqst(char*user_data)
     time_h = inval.value.time->high;
     time_l = inval.value.time->low;
     
-    current_time = (time_h << BITS_IN_INT) | time_l;
+    current_time = time_h;
+    current_time = (current_time << BITS_IN_INT) | time_l;
     
     cache_wr_rqst(wr_address, wr_data, current_time);
 
     return 0; 
 }
 
-static int rd_ret(char*user_data)
+static PLI_INT32 rd_ret(char* user_data)
 {    
+    assert(user_data == NULL);
+
     // get the time
     unsigned long current_time;
 
@@ -95,7 +96,8 @@ static int rd_ret(char*user_data)
     vpi_get_value(arg, &inval);
     time_h = inval.value.time->high;
     time_l = inval.value.time->low;
-    current_time = (time_h << BITS_IN_INT) | time_l;
+    current_time = time_h;
+    current_time = (current_time << BITS_IN_INT) | time_l;
 
     // set the output
     unsigned int rd_ret_address;
@@ -135,8 +137,10 @@ static int rd_ret(char*user_data)
     return 0; 
 }
 
-static int wr_ret(char*user_data)
+static PLI_INT32 wr_ret(char* user_data)
 {    
+    assert(user_data == NULL);
+
     // get the time
     unsigned long current_time;
 
@@ -155,7 +159,8 @@ static int wr_ret(char*user_data)
     vpi_get_value(arg, &inval);
     time_h = inval.value.time->high;
     time_l = inval.value.time->low;
-    current_time = (time_h << BITS_IN_INT) | time_l;
+    current_time = time_h;
+    current_time = (current_time << BITS_IN_INT) | time_l;
 
     // set the output
     unsigned int wr_ret_address;
@@ -189,8 +194,10 @@ static int wr_ret(char*user_data)
     return 0; 
 }
 
-static int update(char*user_data)
+static PLI_INT32 update(char* user_data)
 {
+    assert(user_data == NULL);
+
     // get the time
     unsigned long current_time;
 
@@ -209,14 +216,19 @@ static int update(char*user_data)
     vpi_get_value(arg, &inval);
     time_h = inval.value.time->high;
     time_l = inval.value.time->low;
-    current_time = (time_h << BITS_IN_INT) | time_l;
+    current_time = time_h;
+    current_time = (current_time << BITS_IN_INT) | time_l;
 
     cache_update(current_time);
     //mem_update(current_time);
+
+    return current_time;
 }
 
-static int init(char*user_data)
-{    
+static PLI_INT32 init(char* user_data)
+{
+    assert(user_data == NULL);
+
     // get the time
     unsigned long current_time;
 
@@ -235,91 +247,96 @@ static int init(char*user_data)
     vpi_get_value(arg, &inval);
     time_h = inval.value.time->high;
     time_l = inval.value.time->low;
-    current_time = (time_h << BITS_IN_INT) | time_l;
+    current_time = time_h;
+    current_time = (current_time << BITS_IN_INT) | time_l;
 
     cache_init();
     mem_init();
+
+    return current_time;
 }
 
-static int func_retsize()
+/*
+static int func_retsize(void)
 {
     return BITS_IN_INT;
 }
+*/
 
-void rd_rqst_register()
+void rd_rqst_register(void)
 {
     s_vpi_systf_data tf_data;
     tf_data.type        = vpiSysFunc;
     tf_data.sysfunctype = vpiIntFunc;
     tf_data.tfname    = "$rd_rqst";
     tf_data.calltf    = rd_rqst;
-    tf_data.compiletf = func_compiletf;
-    tf_data.sizetf    = func_retsize;
+    tf_data.compiletf = 0;
+    tf_data.sizetf    = 0;
     tf_data.user_data = 0;
     vpi_register_systf(&tf_data);
 }
 
-void wr_rqst_register()
+void wr_rqst_register(void)
 {
     s_vpi_systf_data tf_data;
     tf_data.type        = vpiSysFunc;
     tf_data.sysfunctype = vpiIntFunc;
     tf_data.tfname    = "$wr_rqst";
     tf_data.calltf    = wr_rqst;
-    tf_data.compiletf = func_compiletf;
-    tf_data.sizetf    = func_retsize;
+    tf_data.compiletf = 0;
+    tf_data.sizetf    = 0;
     tf_data.user_data = 0;
     vpi_register_systf(&tf_data);
 }
 
-void rd_ret_register()
+void rd_ret_register(void)
 {
     s_vpi_systf_data tf_data;
     tf_data.type        = vpiSysFunc;
     tf_data.sysfunctype = vpiSizedFunc;
     tf_data.tfname    = "$rd_ret";
     tf_data.calltf    = rd_ret;
-    tf_data.compiletf = func_compiletf;
-    tf_data.sizetf    = func_retsize;
+    tf_data.compiletf = 0;
+    tf_data.sizetf    = 0;
     tf_data.user_data = 0;
     vpi_register_systf(&tf_data);
 }
 
-void wr_ret_register()
+void wr_ret_register(void)
 {
     s_vpi_systf_data tf_data;
     tf_data.type        = vpiSysFunc;
     tf_data.sysfunctype = vpiSizedFunc;
     tf_data.tfname    = "$wr_ret";
     tf_data.calltf    = wr_ret;
-    tf_data.compiletf = func_compiletf;
-    tf_data.sizetf    = func_retsize;
+    tf_data.compiletf = 0;
+    tf_data.sizetf    = 0;
     tf_data.user_data = 0;
     vpi_register_systf(&tf_data);
 }
 
-void update_register()
+void update_register(void)
 {
     s_vpi_systf_data tf_data;
     tf_data.type        = vpiSysFunc;
     tf_data.sysfunctype = vpiIntFunc;
     tf_data.tfname    = "$update";
     tf_data.calltf    = update;
-    tf_data.compiletf = func_compiletf;
-    tf_data.sizetf    = func_retsize;
+    tf_data.compiletf = 0;
+    tf_data.sizetf    = 0;
     tf_data.user_data = 0;
     vpi_register_systf(&tf_data);
 }
 
-void init_register()
+void init_register(void)
 {
     s_vpi_systf_data tf_data;
     tf_data.type        = vpiSysFunc;
     tf_data.sysfunctype = vpiIntFunc;
     tf_data.tfname    = "$init";
     tf_data.calltf    = init;
-    tf_data.compiletf = func_compiletf;
-    tf_data.sizetf    = func_retsize;
+    tf_data.compiletf = 0;
+    tf_data.sizetf    = 0;
     tf_data.user_data = 0;
     vpi_register_systf(&tf_data);
 }

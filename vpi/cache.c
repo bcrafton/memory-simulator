@@ -12,7 +12,7 @@ static BOOL in_cache(BYTE cache_line_number, BYTE tag);
 static BOOL mem_rd_rqst_pending(BYTE cache_line_number, BYTE tag);
 static void set_mem_rd_rqst_pending(BYTE cache_line_number, BYTE tag);
 static void clear_mem_rd_rqst_pending(BYTE cache_line_number, BYTE tag);
-static BYTE evict_lru();
+static BYTE evict_lru(void);
 
 static short pending_mem_rd_rqsts[MEMORY_SIZE >> OFFSET_LOG2];
 
@@ -44,6 +44,7 @@ void cache_rd_rqst(WORD address, TIME current_time)
 
 void cache_wr_rqst(WORD address, WORD data, TIME current_time)
 {
+    vpi_printf("i shud not be called\n");
     cache_wr_rqst_t* rqst = (cache_wr_rqst_t*) malloc(sizeof(cache_wr_rqst_t));
     rqst->address = address;
     rqst->data = data;
@@ -91,6 +92,7 @@ cache_rd_ret_t* cache_rd_ret(TIME current_time)
 
 cache_wr_ret_t* cache_wr_ret(TIME current_time)
 {
+    vpi_printf("i shud not be called\n");
     if(priority_list_empty(wr_rqst_queue))
     {
         return NULL;
@@ -143,6 +145,7 @@ void cache_update(TIME current_time)
             }
         }
 
+        /*
         for(i=0; i<cache_wr_miss_queue->size; i++)
         {
             if( in_cache(TAG(wr_ret->start_address), CACHELINE(wr_ret->start_address)) )
@@ -152,17 +155,29 @@ void cache_update(TIME current_time)
                 priority_list_push(&rqst->time, rqst, wr_rqst_queue);
             }
         }
+        */
+        BYTE cache_line_number = CACHELINE(rd_ret->start_address);
+        BYTE tag = TAG(rd_ret->start_address);
+
         // need to use the start address
         clear_mem_rd_rqst_pending(tag, cache_line_number);
         
-        // flush lru to open up cache line for new memory
+        
+        // find where to evict
         BYTE lru = evict_lru();
-        WORD start_address = (cache.lines[lru].tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (lru << OFFSET_LOG2);
-        mem_wr_rqst(cache.lines[lru].data, start_address, current_time);
-
+        cache.lines[lru].tag = tag;
+        cache.lines[lru].valid = 1;
+        /*
+        // flush lru to open up cache line for new memory
+        if (cache.lines[lru].dirty==1)
+        {
+            WORD start_address = (cache.lines[lru].tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (lru << OFFSET_LOG2);
+            mem_wr_rqst(cache.lines[lru].data, start_address, current_time);
+        }
+        
         // put the rd_ret into cache.
-        BYTE cache_line_number = CACHELINE(rd_ret->start_address);
         memcpy(cache.lines[cache_line_number].data, rd_ret->data, NUM_CACHE_LINES * sizeof(WORD));
+        */
     }
     if(wr_ret != NULL)
     {
@@ -171,7 +186,7 @@ void cache_update(TIME current_time)
 
 static BOOL in_cache(BYTE cache_line_number, BYTE tag)
 {
-    return (cache.lines[cache_line_number].tag == tag && cache.lines[cache_line_number].valid==1);
+    return ( (cache.lines[cache_line_number].tag == tag) && (cache.lines[cache_line_number].valid==1) );
 }
 
 static BOOL mem_rd_rqst_pending(BYTE cache_line_number, BYTE tag)
@@ -204,6 +219,4 @@ static BYTE evict_lru()
     return evicted;
 }
 
-int main()
-{}
 

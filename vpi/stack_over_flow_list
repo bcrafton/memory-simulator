@@ -1,0 +1,2 @@
+warning: function declaration isn’t a prototype [-Wstrict-prototypes]
+http://stackoverflow.com/questions/42125/function-declaration-isnt-a-prototype

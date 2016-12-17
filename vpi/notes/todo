@@ -28,3 +28,7 @@ LETS PLAN TO JUST THROW CURRENT CODE IN WORK REPO OUT, IT IS BLOCKING
 ahhh how do we pass the actual data around
 really just need to pick a way to do it and stick with it
 and be able to change if it is dumb choice.
+---------------------------------------------------------------------
+need only do what we are testing
+comment rest of calls out
+

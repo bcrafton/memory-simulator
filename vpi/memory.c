@@ -16,7 +16,7 @@ void mem_rd_rqst(WORD start_address, TIME current_time)
 {
     mem_rd_rqst_t* rqst = (mem_rd_rqst_t*) malloc(sizeof(mem_rd_rqst_t));
     rqst->start_address = start_address;
-    rqst->time = current_time;
+    rqst->time = current_time + MEMORY_READ_TIME;
 
     priority_list_push(&rqst->time, rqst, rd_rqst_queue);
 }
@@ -25,7 +25,7 @@ void mem_wr_rqst(WORD* data, WORD start_address, TIME current_time)
 {
     mem_wr_rqst_t* rqst = (mem_wr_rqst_t*) malloc(sizeof(mem_wr_rqst_t));
     rqst->start_address = start_address;
-    rqst->time = current_time;
+    rqst->time = current_time + MEMORY_WRITE_TIME;
 
     memcpy(rqst->data, data, WORDS_PER_CACHE_LINE * sizeof(WORD));
 

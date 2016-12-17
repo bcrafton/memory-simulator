@@ -1,12 +1,13 @@
 #include "../header/list.h"
 
-static int print(LIST_TYPE v, List *list);
+static void print(LIST_TYPE v, List *list);
 
 Node* node_constructor(LIST_TYPE value){
 	Node *node = malloc(sizeof(Node));
 	node->next = NULL;
 	node->prev = NULL;
 	node->value = value;
+    return node;
 }
 
 List* list_constructor_print( void (*list_print_function)(void*) ){
@@ -134,8 +135,8 @@ LIST_TYPE list_remove(int index, List *list){
 		return NULL;
 	}
 	if(list->size == 1){
-		list->head == NULL;
-		list->tail == NULL;
+		list->head = NULL;
+		list->tail = NULL;
 		list->size--;
 		return NULL;
 	}
@@ -184,6 +185,6 @@ void list_print(List *list){
 	printf("[%d]\n", list->size);
 }
 
-static int print(LIST_TYPE v, List *list){
+static void print(LIST_TYPE v, List *list){
 	(*(list->list_print_function))(v);
 }

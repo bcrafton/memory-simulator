@@ -39,10 +39,18 @@ module memory_controller(
 
     initial begin
         vld_init = $init($time);
+
+        wr_ret_address = 0;
+        wr_ret_ack = 0;
+
+        rd_ret_data = 0;
+        rd_ret_address = 0;
+        rd_ret_ack = 0;
     end
 
     always @(posedge clk) begin
-        //vld_update = $update($time);
+        $display("%t", $time);
+        vld_update = $update($time);
 
         if(wr_en) begin
             //vld_wr_rqst = $wr_rqst(wr_address, wr_data, $time);
@@ -52,9 +60,6 @@ module memory_controller(
         end
         
         {rd_ret_address, rd_ret_data, rd_ret_ack} = $rd_ret($time);
-        if (rd_ret_ack) begin
-            $display("rd ret : address: %h data: %h\n", rd_ret_address, rd_ret_data);
-        end
         //{wr_ret_address, wr_ret_ack} = $wr_ret($time);
     end
 

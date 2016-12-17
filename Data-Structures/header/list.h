@@ -23,7 +23,7 @@ struct List{
 };
 
 Node* node_constructor(LIST_TYPE value);
-List* list_constructor();
+List* list_constructor(void);
 List* list_constructor_print( void (*list_print_function)(void*) );
 void list_append(LIST_TYPE value, List* list);
 void list_print(List *list);

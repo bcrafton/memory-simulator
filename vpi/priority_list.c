@@ -1,7 +1,7 @@
 
 #include "priority_list.h"
 
-static int priority_list_size(PriorityList *list);
+static unsigned int priority_list_size(PriorityList *list);
 
 PriorityList* priority_list_constructor( int (*compare_function)(void*, void*) )
 {
@@ -107,7 +107,7 @@ int priority_list_empty(PriorityList *list)
 	return list->size == 0;
 }
 
-static int priority_list_size(PriorityList *list)
+static unsigned int priority_list_size(PriorityList *list)
 {
 	if(list->head == NULL && list->tail == NULL)
 	{
