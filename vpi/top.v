@@ -52,22 +52,22 @@ module top;
         clk = 0;
     end
 
-    //always #1 clk = ~clk;
+    always #1 clk = ~clk;
 
-    integer i = 0; 
-    initial begin//always @(posedge clk) begin
-                   
-        for(i=0; i<500; i++) begin
-            #1 
-            clk = ~clk;
-            rd_address = rd_address + 1;
-            wr_address = wr_address + 1;
-            wr_data = wr_data + 1;
-            if(rd_ret_ack == 1) begin
-                $display("%h %h", rd_ret_address, rd_ret_data);
-            end
+    always @(posedge clk) begin
+
+        if ($time > 10) begin
+            rd_en = 0;
+            wr_en = 0;
         end
-        
+
+        rd_address = rd_address + 1;
+        wr_address = wr_address + 1;
+        wr_data = wr_data + 1;
+
+        if(rd_ret_ack == 1) begin
+            $display("%h %h", rd_ret_address, rd_ret_data);
+        end
     end
 
 endmodule

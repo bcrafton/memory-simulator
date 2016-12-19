@@ -27,6 +27,7 @@ void cache_init()
     for(i=0;i<NUM_CACHE_LINES;i++)
     {
         cache.lines[i].dirty = 0;
+        cache.lines[i].valid = 0;
         cache.lines[i].next = i+1;
     }
     cache.lru = 0; 
@@ -80,7 +81,8 @@ cache_rd_ret_t* cache_rd_ret(TIME current_time)
         {
             list_append(rqst, cache_rd_miss_queue);
             if(!mem_rd_rqst_pending(tag, cache_line_number))
-            {
+            { 
+                vpi_printf("mem rqst made\n");
                 WORD start_address = (tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (cache_line_number << OFFSET_LOG2);
                 mem_rd_rqst(start_address, current_time);
                 set_mem_rd_rqst_pending(tag, cache_line_number);
@@ -134,11 +136,46 @@ void cache_update(TIME current_time)
     // move the cache misses back into valid request queue
     if(rd_ret != NULL)
     {
+        vpi_printf("rd_ret not null %d\n", current_time);
+        BYTE cache_line_number = CACHELINE(rd_ret->start_address);
+        BYTE tag = TAG(rd_ret->start_address);
+
+        // need to use the start address
+        clear_mem_rd_rqst_pending(tag, cache_line_number);
+        
+        // find where to evict
+        BYTE lru = evict_lru();
+        cache.lines[lru].tag = tag;
+        cache.lines[lru].valid = 1;
+
+        /*
+        // flush lru to open up cache line for new memory
+        if (cache.lines[lru].dirty==1)
+        {
+            WORD start_address = (cache.lines[lru].tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (lru << OFFSET_LOG2);
+            mem_wr_rqst(cache.lines[lru].data, start_address, current_time);
+        }
+        
+        // put the rd_ret into cache.
+        memcpy(cache.lines[cache_line_number].data, rd_ret->data, NUM_CACHE_LINES * sizeof(WORD));
+        */
         int i;
         for(i=0; i<cache_rd_miss_queue->size; i++)
-        {
+        {   
+            // this dont make any sense
+            // this is suppose to be ... if the rd_ret is data needed for something 
+            // in cache miss queue, then remove it
+            // we shudnt be checking the cache here for data
+            
+            // update: we moved this down below after we update the cache
+
+            cache_rd_rqst_t* rqst = (cache_rd_rqst_t*) list_get(i, cache_rd_miss_queue);
+
+            vpi_printf("cache miss address %d %d %d %d\n", i, rqst->address, cache_rd_miss_queue->size, current_time);
+
             if( in_cache(TAG(rd_ret->start_address), CACHELINE(rd_ret->start_address)) )
             {
+                vpi_printf("in cache\n");
                 cache_rd_rqst_t* rqst = (cache_rd_rqst_t*) list_remove(i, cache_rd_miss_queue);
                 rqst->time = current_time + CACHE_READ_TIME;
                 priority_list_push(&rqst->time, rqst, rd_rqst_queue);
@@ -155,28 +192,6 @@ void cache_update(TIME current_time)
                 priority_list_push(&rqst->time, rqst, wr_rqst_queue);
             }
         }
-        */
-        BYTE cache_line_number = CACHELINE(rd_ret->start_address);
-        BYTE tag = TAG(rd_ret->start_address);
-
-        // need to use the start address
-        clear_mem_rd_rqst_pending(tag, cache_line_number);
-        
-        
-        // find where to evict
-        BYTE lru = evict_lru();
-        cache.lines[lru].tag = tag;
-        cache.lines[lru].valid = 1;
-        /*
-        // flush lru to open up cache line for new memory
-        if (cache.lines[lru].dirty==1)
-        {
-            WORD start_address = (cache.lines[lru].tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (lru << OFFSET_LOG2);
-            mem_wr_rqst(cache.lines[lru].data, start_address, current_time);
-        }
-        
-        // put the rd_ret into cache.
-        memcpy(cache.lines[cache_line_number].data, rd_ret->data, NUM_CACHE_LINES * sizeof(WORD));
         */
     }
     if(wr_ret != NULL)

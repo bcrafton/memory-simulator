@@ -49,13 +49,13 @@ module memory_controller(
     end
 
     always @(posedge clk) begin
-        $display("%t", $time);
         vld_update = $update($time);
 
         if(wr_en) begin
             //vld_wr_rqst = $wr_rqst(wr_address, wr_data, $time);
         end
         if (rd_en) begin
+            $display("rd rqst made %d %d\n", rd_address, $time);
             vld_rd_rqst = $rd_rqst(rd_address, $time);
         end
         
