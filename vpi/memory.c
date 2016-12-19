@@ -10,6 +10,11 @@ void mem_init()
 {
     rd_rqst_queue = priority_list_constructor(&time_compare);
     wr_rqst_queue = priority_list_constructor(&time_compare);
+    int i;
+    for(i=0; i<MEMORY_SIZE; i++)
+    {
+        memory[i] = 0;
+    }
 }
 
 void mem_rd_rqst(WORD start_address, TIME current_time)
@@ -64,16 +69,26 @@ mem_wr_ret_t* mem_wr_ret(TIME current_time)
 
         memcpy(memory + rqst->start_address * sizeof(WORD), rqst->data, WORDS_PER_CACHE_LINE * sizeof(WORD));
 
-        mem_wr_ret_t* ret = (mem_wr_ret_t*) malloc(sizeof(mem_rd_ret_t));
+        mem_wr_ret_t* ret = (mem_wr_ret_t*) malloc(sizeof(mem_wr_ret_t));
         ret->start_address = rqst->start_address;
         return ret;
     }
     return NULL;
 }
 
+void dump_memory()
+{
+    FILE *file;
+    file = fopen("memory", "w");
+    
+    int i;
+    for(i=0; i<MEMORY_SIZE; i++)
+    {
+        fprintf(file, "%x: %x\n", i, memory[i]);
+    }
 
-
-
+    fclose(file);
+}
 
 
 

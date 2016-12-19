@@ -14,6 +14,8 @@ module top;
 
     reg clk;
 
+    reg dump_valid;
+
     memory_controller mc(
     .clk(clk),
     .wr_address(wr_address),
@@ -44,12 +46,13 @@ module top;
         //rd_ret_address = 0;
         //rd_ret_ack = 0;
         
-        wr_address = 150;
+        wr_address = 0;
         wr_data = 0;
         rd_en = 1;
         wr_en = 1;
 
         clk = 0;
+        dump_valid = 0;
     end
 
     always #1 clk = ~clk;
@@ -69,6 +72,14 @@ module top;
 
         if(rd_ret_ack == 1) begin
             $display("%h %h", rd_ret_address, rd_ret_data);
+        end
+    end
+
+    always @(posedge clk) begin
+
+        if($time > 500) begin
+            dump_valid <= $dump($time);
+            $finish;
         end
     end
 

@@ -2,6 +2,7 @@
 #include <vpi_user.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "../Data-Structures/header/rbtree.h"
 #include "priority_list.h"
 
@@ -100,12 +101,14 @@ void cache_wr_rqst(WORD address, WORD data, TIME current_time);
 cache_rd_ret_t* cache_rd_ret(TIME current_time);
 cache_wr_ret_t* cache_wr_ret(TIME current_time);
 void cache_update(TIME current_time);
+void dump_cache(void);
 
 void mem_init(void);
 void mem_rd_rqst(WORD start_address, TIME current_time);
 void mem_wr_rqst(WORD* data, WORD start_address, TIME current_time);
 mem_rd_ret_t* mem_rd_ret(TIME current_time);
 mem_wr_ret_t* mem_wr_ret(TIME current_time);
+void dump_memory(void);
 
 int time_compare(void *o1, void *o2);
 int address_compare(void *o1, void *o2);

@@ -45,7 +45,7 @@ void cache_rd_rqst(WORD address, TIME current_time)
 
 void cache_wr_rqst(WORD address, WORD data, TIME current_time)
 {
-    vpi_printf("i shud not be called\n");
+    vpi_printf("wr rqst made\n");
     cache_wr_rqst_t* rqst = (cache_wr_rqst_t*) malloc(sizeof(cache_wr_rqst_t));
     rqst->address = address;
     rqst->data = data;
@@ -94,10 +94,8 @@ cache_rd_ret_t* cache_rd_ret(TIME current_time)
     return NULL;
 }
 
-/*
 cache_wr_ret_t* cache_wr_ret(TIME current_time)
 {
-    vpi_printf("i shud not be called\n");
     if(priority_list_empty(wr_rqst_queue))
     {
         return NULL;
@@ -107,21 +105,27 @@ cache_wr_ret_t* cache_wr_ret(TIME current_time)
 
     BYTE tag = TAG(rqst->address);
     BYTE cache_line_number = CACHELINE(rqst->address);
+    BYTE offset = OFFSET(rqst->address);
 
     if(rqst->time <= current_time)
     {
+        //vpi_printf("%d: address: %x\n", current_time, rqst->address);
         priority_list_pop(wr_rqst_queue);
         if(in_cache(cache_line_number, tag))
         {
+            vpi_printf("%d: writing %x to %x\n", current_time, rqst->data, rqst->address);
+            cache.lines[cache_line_number].data[offset] = rqst->data;
+
             cache_wr_ret_t* ret = (cache_wr_ret_t*) malloc(sizeof(cache_wr_ret_t));
             ret->address = rqst->address;
             return ret;
         }
         else
         {
-            list_append(rqst, cache_wr_miss_queue);
+            rbtree_add(&rqst->address, rqst, cache_wr_miss_table);
             if(!mem_rd_rqst_pending(tag, cache_line_number))
-            {
+            { 
+                vpi_printf("mem rqst made %d\n", current_time);
                 WORD start_address = (tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (cache_line_number << OFFSET_LOG2);
                 mem_rd_rqst(start_address, current_time);
                 set_mem_rd_rqst_pending(tag, cache_line_number);
@@ -130,7 +134,6 @@ cache_wr_ret_t* cache_wr_ret(TIME current_time)
     }
     return NULL;
 }
-*/
 
 void cache_update(TIME current_time)
 {
@@ -176,9 +179,9 @@ void cache_update(TIME current_time)
             }
             else if(rbtree_contains(&address, cache_wr_miss_table))
             {
-                cache_rd_rqst_t* rqst = (cache_rd_rqst_t*) rbtree_search(&address, cache_wr_miss_table);
+                cache_wr_rqst_t* rqst = (cache_wr_rqst_t*) rbtree_search(&address, cache_wr_miss_table);
                 rqst->time = current_time + CACHE_READ_TIME;
-                priority_list_push(&rqst->time, rqst, rd_rqst_queue);
+                priority_list_push(&rqst->time, rqst, wr_rqst_queue);
                 rbtree_remove(&address, cache_wr_miss_table);
             }
             else
@@ -190,7 +193,27 @@ void cache_update(TIME current_time)
     }
     if(wr_ret != NULL)
     {
+        vpi_printf("wr_ret not null %d\n", current_time);
     }
+}
+
+void dump_cache()
+{
+    FILE *file;
+    file = fopen("cache", "w");
+    
+    int i, j;
+    for(i=0; i<NUM_CACHE_LINES; i++)
+    {
+        fprintf(file, "cache line: %d\n", i);
+        for(j=0; j<WORDS_PER_CACHE_LINE; j++)
+        {
+            fprintf(file, "%x: %x\n", j, cache.lines[i].data[j]);
+        }
+        fprintf(file, "\n");
+    }
+
+    fclose(file);
 }
 
 static BOOL in_cache(BYTE cache_line_number, BYTE tag)

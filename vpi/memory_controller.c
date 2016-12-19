@@ -256,12 +256,36 @@ static PLI_INT32 init(char* user_data)
     return current_time;
 }
 
-/*
-static int func_retsize(void)
+static PLI_INT32 dump(char* user_data)
 {
-    return BITS_IN_INT;
+    assert(user_data == NULL);
+
+    // get the time
+    unsigned long current_time;
+
+    vpiHandle vhandle, iterator, arg;
+    vhandle = vpi_handle(vpiSysTfCall, NULL);
+
+    s_vpi_value inval;
+    
+    unsigned int time_h;
+    unsigned int time_l;
+
+    iterator = vpi_iterate(vpiArgument, vhandle);
+
+    arg = vpi_scan(iterator);
+    inval.format = vpiTimeVal;
+    vpi_get_value(arg, &inval);
+    time_h = inval.value.time->high;
+    time_l = inval.value.time->low;
+    current_time = time_h;
+    current_time = (current_time << BITS_IN_INT) | time_l;
+
+    dump_cache();
+    dump_memory();
+
+    return current_time;
 }
-*/
 
 void rd_rqst_register(void)
 {
@@ -341,6 +365,19 @@ void init_register(void)
     vpi_register_systf(&tf_data);
 }
 
+void dump_register(void)
+{
+    s_vpi_systf_data tf_data;
+    tf_data.type        = vpiSysFunc;
+    tf_data.sysfunctype = vpiIntFunc;
+    tf_data.tfname    = "$dump";
+    tf_data.calltf    = dump;
+    tf_data.compiletf = 0;
+    tf_data.sizetf    = 0;
+    tf_data.user_data = 0;
+    vpi_register_systf(&tf_data);
+}
+
 void (*vlog_startup_routines[])() = {
     rd_rqst_register,
     wr_rqst_register,
@@ -348,5 +385,6 @@ void (*vlog_startup_routines[])() = {
     wr_ret_register,
     update_register,
     init_register,
+    dump_register,
     0
 };

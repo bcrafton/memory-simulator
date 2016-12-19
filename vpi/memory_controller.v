@@ -38,7 +38,7 @@ module memory_controller(
     reg vld_update;
 
     initial begin
-        vld_init = $init($time);
+        vld_init <= $init($time);
 
         wr_ret_address = 0;
         wr_ret_ack = 0;
@@ -49,21 +49,23 @@ module memory_controller(
     end
 
     always @(posedge clk) begin
-        vld_update = $update($time);
+        vld_update <= $update($time);
 
         if(wr_en) begin
-            //vld_wr_rqst = $wr_rqst(wr_address, wr_data, $time);
+            $display("%d %d\n", wr_address, $time);
+            vld_wr_rqst <= $wr_rqst(wr_address, wr_data, $time);
         end
         if (rd_en) begin
             //$display("%d %d\n", rd_address, $time);
-            vld_rd_rqst = $rd_rqst(rd_address, $time);
+            //vld_rd_rqst <= $rd_rqst(rd_address, $time);
         end
         
         // holy shit this was the problem:
         //{rd_ret_address, rd_ret_data, rd_ret_ack} = $rd_ret($time);
         
-        {rd_ret_address, rd_ret_data, rd_ret_ack} <= $rd_ret($time);
-        //{wr_ret_address, wr_ret_ack} = $wr_ret($time);
+        //{rd_ret_address, rd_ret_data, rd_ret_ack} <= $rd_ret($time);
+        
+        {wr_ret_address, wr_ret_ack} <= $wr_ret($time);
     end
 
 endmodule
