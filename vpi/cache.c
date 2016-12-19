@@ -5,8 +5,8 @@ static cache_t cache;
 
 static PriorityList* rd_rqst_queue = NULL;
 static PriorityList* wr_rqst_queue = NULL;
-static List* cache_rd_miss_queue = NULL;
-static List* cache_wr_miss_queue = NULL;
+static RBTree* cache_rd_miss_table = NULL;
+static RBTree* cache_wr_miss_table = NULL;
 
 static BOOL in_cache(BYTE cache_line_number, BYTE tag);
 static BOOL mem_rd_rqst_pending(BYTE cache_line_number, BYTE tag);
@@ -20,8 +20,8 @@ void cache_init()
 {
     rd_rqst_queue = priority_list_constructor(&time_compare);
     wr_rqst_queue = priority_list_constructor(&time_compare);
-    cache_rd_miss_queue = list_constructor();
-    cache_wr_miss_queue = list_constructor();
+    cache_rd_miss_table = rbtree_constructor(&address_compare);
+    cache_wr_miss_table = rbtree_constructor(&address_compare);
 
     int i;
     for(i=0;i<NUM_CACHE_LINES;i++)
@@ -69,7 +69,9 @@ cache_rd_ret_t* cache_rd_ret(TIME current_time)
 
     if(rqst->time <= current_time)
     {
+        //vpi_printf("%d %d\n", rqst->address, rqst->time);
         priority_list_pop(rd_rqst_queue);
+
         if(in_cache(cache_line_number, tag))
         {
             cache_rd_ret_t* ret = (cache_rd_ret_t*) malloc(sizeof(cache_rd_ret_t));
@@ -79,10 +81,10 @@ cache_rd_ret_t* cache_rd_ret(TIME current_time)
         }
         else
         {
-            list_append(rqst, cache_rd_miss_queue);
+            rbtree_add(&rqst->address, rqst, cache_rd_miss_table);
             if(!mem_rd_rqst_pending(tag, cache_line_number))
             { 
-                vpi_printf("mem rqst made\n");
+                vpi_printf("mem rqst made %d\n", current_time);
                 WORD start_address = (tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (cache_line_number << OFFSET_LOG2);
                 mem_rd_rqst(start_address, current_time);
                 set_mem_rd_rqst_pending(tag, cache_line_number);
@@ -92,6 +94,7 @@ cache_rd_ret_t* cache_rd_ret(TIME current_time)
     return NULL;
 }
 
+/*
 cache_wr_ret_t* cache_wr_ret(TIME current_time)
 {
     vpi_printf("i shud not be called\n");
@@ -127,6 +130,7 @@ cache_wr_ret_t* cache_wr_ret(TIME current_time)
     }
     return NULL;
 }
+*/
 
 void cache_update(TIME current_time)
 {
@@ -159,40 +163,30 @@ void cache_update(TIME current_time)
         // put the rd_ret into cache.
         memcpy(cache.lines[cache_line_number].data, rd_ret->data, NUM_CACHE_LINES * sizeof(WORD));
         */
-        int i;
-        for(i=0; i<cache_rd_miss_queue->size; i++)
-        {   
-            // this dont make any sense
-            // this is suppose to be ... if the rd_ret is data needed for something 
-            // in cache miss queue, then remove it
-            // we shudnt be checking the cache here for data
-            
-            // update: we moved this down below after we update the cache
-
-            cache_rd_rqst_t* rqst = (cache_rd_rqst_t*) list_get(i, cache_rd_miss_queue);
-
-            vpi_printf("cache miss address %d %d %d %d\n", i, rqst->address, cache_rd_miss_queue->size, current_time);
-
-            if( in_cache(TAG(rd_ret->start_address), CACHELINE(rd_ret->start_address)) )
+        
+        WORD address = rd_ret->start_address;
+        while(address < rd_ret->start_address+WORDS_PER_CACHE_LINE)
+        {
+            if(rbtree_contains(&address, cache_rd_miss_table))
             {
-                vpi_printf("in cache\n");
-                cache_rd_rqst_t* rqst = (cache_rd_rqst_t*) list_remove(i, cache_rd_miss_queue);
+                cache_rd_rqst_t* rqst = (cache_rd_rqst_t*) rbtree_search(&address, cache_rd_miss_table);
                 rqst->time = current_time + CACHE_READ_TIME;
                 priority_list_push(&rqst->time, rqst, rd_rqst_queue);
+                rbtree_remove(&address, cache_rd_miss_table);
+            }
+            else if(rbtree_contains(&address, cache_wr_miss_table))
+            {
+                cache_rd_rqst_t* rqst = (cache_rd_rqst_t*) rbtree_search(&address, cache_wr_miss_table);
+                rqst->time = current_time + CACHE_READ_TIME;
+                priority_list_push(&rqst->time, rqst, rd_rqst_queue);
+                rbtree_remove(&address, cache_wr_miss_table);
+            }
+            else
+            {
+                address++;
             }
         }
 
-        /*
-        for(i=0; i<cache_wr_miss_queue->size; i++)
-        {
-            if( in_cache(TAG(wr_ret->start_address), CACHELINE(wr_ret->start_address)) )
-            {
-                cache_wr_rqst_t* rqst = (cache_wr_rqst_t*) list_remove(i, cache_wr_miss_queue);
-                rqst->time = current_time + CACHE_WRITE_TIME;
-                priority_list_push(&rqst->time, rqst, wr_rqst_queue);
-            }
-        }
-        */
     }
     if(wr_ret != NULL)
     {

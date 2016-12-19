@@ -57,13 +57,15 @@ module top;
     always @(posedge clk) begin
 
         if ($time > 10) begin
-            rd_en = 0;
-            wr_en = 0;
+            rd_en <= 0;
+            wr_en <= 0;
+        end else begin
+            //$display("%h %h\n", rd_address, $time);
         end
 
-        rd_address = rd_address + 1;
-        wr_address = wr_address + 1;
-        wr_data = wr_data + 1;
+        rd_address <= rd_address + 1;
+        wr_address <= wr_address + 1;
+        wr_data <= wr_data + 1;
 
         if(rd_ret_ack == 1) begin
             $display("%h %h", rd_ret_address, rd_ret_data);

@@ -2,7 +2,7 @@
 #include <vpi_user.h>
 #include <stdio.h>
 #include <string.h>
-#include "../Data-Structures/header/list.h"
+#include "../Data-Structures/header/rbtree.h"
 #include "priority_list.h"
 
 #define BITS_IN_INT 32
@@ -108,8 +108,7 @@ mem_rd_ret_t* mem_rd_ret(TIME current_time);
 mem_wr_ret_t* mem_wr_ret(TIME current_time);
 
 int time_compare(void *o1, void *o2);
-
-
+int address_compare(void *o1, void *o2);
 
 
 
