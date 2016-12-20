@@ -28,6 +28,7 @@ void mem_rd_rqst(WORD start_address, TIME current_time)
 
 void mem_wr_rqst(WORD* data, WORD start_address, TIME current_time)
 {
+    //vpi_printf("mem wr rqst made\n");
     mem_wr_rqst_t* rqst = (mem_wr_rqst_t*) malloc(sizeof(mem_wr_rqst_t));
     rqst->start_address = start_address;
     rqst->time = current_time + MEMORY_WRITE_TIME;
@@ -65,6 +66,7 @@ mem_wr_ret_t* mem_wr_ret(TIME current_time)
     mem_wr_rqst_t* rqst = (mem_wr_rqst_t*) priority_list_front(wr_rqst_queue);
     if(rqst->time <= current_time)
     {
+        //vpi_printf("writing to memory %x\n", rqst->data[0]);
         priority_list_pop(wr_rqst_queue);
 
         memcpy(memory + rqst->start_address * sizeof(WORD), rqst->data, WORDS_PER_CACHE_LINE * sizeof(WORD));
@@ -84,7 +86,7 @@ void dump_memory()
     int i;
     for(i=0; i<MEMORY_SIZE; i++)
     {
-        fprintf(file, "%x: %x\n", i, memory[i]);
+        fprintf(file, "%d: %d\n", i, memory[i]);
     }
 
     fclose(file);

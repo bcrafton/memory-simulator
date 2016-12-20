@@ -266,7 +266,7 @@ static void adjustAfterRemoval(RBTreeNode* n, RBTree *tree) {
                 setColor(sibling, Black);
                 setColor(parentOf(n), Red);
                 rotateRight(parentOf(n), tree);
-                printf("rotate right\n");
+                //printf("rotate right\n");
                 sibling = leftOf(parentOf(n));
             }
             if (isBlack(leftOf(sibling)) && isBlack(rightOf(sibling))) {
@@ -277,7 +277,7 @@ static void adjustAfterRemoval(RBTreeNode* n, RBTree *tree) {
                     setColor(rightOf(sibling), Black);
                     setColor(sibling, Red);
                     rotateLeft(sibling, tree);
-                    printf("rotate left\n");
+                    //printf("rotate left\n");
                     sibling = leftOf(parentOf(n));
                 }
                 setColor(sibling, colorOf(parentOf(n)));

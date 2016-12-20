@@ -52,7 +52,7 @@ module memory_controller(
         vld_update <= $update($time);
 
         if(wr_en) begin
-            $display("%d %d\n", wr_address, $time);
+            //$display("%d %d\n", wr_address, $time);
             vld_wr_rqst <= $wr_rqst(wr_address, wr_data, $time);
         end
         if (rd_en) begin

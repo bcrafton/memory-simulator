@@ -59,7 +59,7 @@ module top;
 
     always @(posedge clk) begin
 
-        if ($time > 500) begin
+        if ($time > 265) begin
             rd_en <= 0;
             wr_en <= 0;
         end else begin
@@ -71,7 +71,7 @@ module top;
         wr_data <= wr_data + 1;
 
         if(rd_ret_ack == 1) begin
-            $display("%h %h", rd_ret_address, rd_ret_data);
+            //$display("%h %h", rd_ret_address, rd_ret_data);
         end
     end
 

@@ -32,6 +32,14 @@ void cache_init()
     }
     cache.lru = 0; 
     cache.mru = NUM_CACHE_LINES-1;
+
+    FILE *file;
+
+    file = fopen("cache_rd_rqsts", "w");
+    fclose(file);
+
+    file = fopen("cache_wr_rqsts", "w");
+    fclose(file);
 }
 
 void cache_rd_rqst(WORD address, TIME current_time)
@@ -40,16 +48,26 @@ void cache_rd_rqst(WORD address, TIME current_time)
     rqst->address = address;
     rqst->time = current_time + CACHE_READ_TIME;
 
+    FILE *file;
+    file = fopen("cache_rd_rqsts", "a");
+    fprintf(file, "%d, %d: %d\n", current_time, rqst->time, address);
+    fclose(file);
+
     priority_list_push(&rqst->time, rqst, rd_rqst_queue);
 }
 
 void cache_wr_rqst(WORD address, WORD data, TIME current_time)
 {
-    vpi_printf("wr rqst made\n");
+    //vpi_printf("wr rqst made\n");
     cache_wr_rqst_t* rqst = (cache_wr_rqst_t*) malloc(sizeof(cache_wr_rqst_t));
     rqst->address = address;
     rqst->data = data;
     rqst->time = current_time + CACHE_WRITE_TIME;
+
+    FILE *file;
+    file = fopen("cache_wr_rqsts", "a");
+    fprintf(file, "%d, %d: address %d data %d\n", current_time, rqst->time, address, data);
+    fclose(file);
 
     priority_list_push(&rqst->time, rqst, wr_rqst_queue);
 }
@@ -113,8 +131,9 @@ cache_wr_ret_t* cache_wr_ret(TIME current_time)
         priority_list_pop(wr_rqst_queue);
         if(in_cache(cache_line_number, tag))
         {
-            vpi_printf("%d: writing %x to %x\n", current_time, rqst->data, rqst->address);
+            //vpi_printf("%d: writing %x to %x\n", current_time, rqst->data, rqst->address);
             cache.lines[cache_line_number].data[offset] = rqst->data;
+            cache.lines[cache_line_number].dirty = 1;
 
             cache_wr_ret_t* ret = (cache_wr_ret_t*) malloc(sizeof(cache_wr_ret_t));
             ret->address = rqst->address;
@@ -155,7 +174,7 @@ void cache_update(TIME current_time)
         cache.lines[lru].tag = tag;
         cache.lines[lru].valid = 1;
 
-        /*
+        
         // flush lru to open up cache line for new memory
         if (cache.lines[lru].dirty==1)
         {
@@ -165,7 +184,6 @@ void cache_update(TIME current_time)
         
         // put the rd_ret into cache.
         memcpy(cache.lines[cache_line_number].data, rd_ret->data, NUM_CACHE_LINES * sizeof(WORD));
-        */
         
         WORD address = rd_ret->start_address;
         while(address < rd_ret->start_address+WORDS_PER_CACHE_LINE)
@@ -205,10 +223,10 @@ void dump_cache()
     int i, j;
     for(i=0; i<NUM_CACHE_LINES; i++)
     {
-        fprintf(file, "cache line: %d dirty %x valid %x next %x\n", i, cache.lines[i].dirty, cache.lines[i].valid, cache.lines[i].next);
+        fprintf(file, "cache line: %d dirty %d valid %d next %d\n", i, cache.lines[i].dirty, cache.lines[i].valid, cache.lines[i].next);
         for(j=0; j<WORDS_PER_CACHE_LINE; j++)
         {
-            fprintf(file, "%x: %x\n", j, cache.lines[i].data[j]);
+            fprintf(file, "%d: %d\n", j, cache.lines[i].data[j]);
         }
         fprintf(file, "\n");
     }
