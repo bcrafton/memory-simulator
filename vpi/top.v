@@ -59,7 +59,7 @@ module top;
 
     always @(posedge clk) begin
 
-        if ($time > 10) begin
+        if ($time > 500) begin
             rd_en <= 0;
             wr_en <= 0;
         end else begin
@@ -77,7 +77,7 @@ module top;
 
     always @(posedge clk) begin
 
-        if($time > 500) begin
+        if($time > 1000) begin
             dump_valid <= $dump($time);
             $finish;
         end

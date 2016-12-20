@@ -205,7 +205,7 @@ void dump_cache()
     int i, j;
     for(i=0; i<NUM_CACHE_LINES; i++)
     {
-        fprintf(file, "cache line: %d\n", i);
+        fprintf(file, "cache line: %d dirty %x valid %x next %x\n", i, cache.lines[i].dirty, cache.lines[i].valid, cache.lines[i].next);
         for(j=0; j<WORDS_PER_CACHE_LINE; j++)
         {
             fprintf(file, "%x: %x\n", j, cache.lines[i].data[j]);
