@@ -29,6 +29,20 @@
 #define MEMORY_READ_TIME 200
 #define MEMORY_WRITE_TIME 200
 
+#define CACHE_FILE              "logs/cache"
+#define MEMORY_FILE             "logs/memory"
+
+#define CACHE_RD_RQSTS_FILE     "logs/cache_rd_rqsts"
+#define CACHE_WR_RQSTS_FILE     "logs/cache_wr_rqsts"
+
+#define MEM_RD_RQSTS_FILE       "logs/mem_rd_rqsts"
+#define MEM_WR_RQSTS_FILE       "logs/mem_wr_rqsts"
+#define MEM_RD_RETS_FILE        "logs/mem_rd_rets"
+#define MEM_WR_RETS_FILE        "logs/mem_wr_rets"
+
+#define CACHE_WR_RETS_FILE       "logs/cache_wr_rets"
+
+
 typedef unsigned short WORD;
 typedef unsigned long TIME;
 typedef unsigned char BYTE;

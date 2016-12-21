@@ -23,9 +23,13 @@ void cache_init()
     cache_rd_miss_table = rbtree_constructor(&address_compare);
     cache_wr_miss_table = rbtree_constructor(&address_compare);
 
-    int i;
+    int i, j;
     for(i=0;i<NUM_CACHE_LINES;i++)
     {
+        for(j=0; j<WORDS_PER_CACHE_LINE; j++)
+        {
+            cache.lines[i].data[j] = 0;
+        }
         cache.lines[i].dirty = 0;
         cache.lines[i].valid = 0;
         cache.lines[i].next = i+1;
@@ -35,10 +39,13 @@ void cache_init()
 
     FILE *file;
 
-    file = fopen("cache_rd_rqsts", "w");
+    file = fopen(CACHE_RD_RQSTS_FILE, "w");
     fclose(file);
 
-    file = fopen("cache_wr_rqsts", "w");
+    file = fopen(CACHE_WR_RQSTS_FILE, "w");
+    fclose(file);
+
+    file = fopen(CACHE_WR_RETS_FILE, "w");
     fclose(file);
 }
 
@@ -49,7 +56,7 @@ void cache_rd_rqst(WORD address, TIME current_time)
     rqst->time = current_time + CACHE_READ_TIME;
 
     FILE *file;
-    file = fopen("cache_rd_rqsts", "a");
+    file = fopen(CACHE_RD_RQSTS_FILE, "a");
     fprintf(file, "%d, %d: %d\n", current_time, rqst->time, address);
     fclose(file);
 
@@ -65,7 +72,7 @@ void cache_wr_rqst(WORD address, WORD data, TIME current_time)
     rqst->time = current_time + CACHE_WRITE_TIME;
 
     FILE *file;
-    file = fopen("cache_wr_rqsts", "a");
+    file = fopen(CACHE_WR_RQSTS_FILE, "a");
     fprintf(file, "%d, %d: address %d data %d\n", current_time, rqst->time, address, data);
     fclose(file);
 
@@ -124,13 +131,19 @@ cache_wr_ret_t* cache_wr_ret(TIME current_time)
     BYTE tag = TAG(rqst->address);
     BYTE cache_line_number = CACHELINE(rqst->address);
     BYTE offset = OFFSET(rqst->address);
+    WORD start_address = (tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (cache_line_number << OFFSET_LOG2);
 
     if(rqst->time <= current_time)
     {
-        //vpi_printf("%d: address: %x\n", current_time, rqst->address);
+        //vpi_printf("%d: address: %d %d %d %d %d\n", current_time, start_address, tag, cache_line_number, cache.lines[cache_line_number].tag, cache.lines[cache_line_number].valid);
         priority_list_pop(wr_rqst_queue);
         if(in_cache(cache_line_number, tag))
         {
+            FILE *file;
+            file = fopen(CACHE_WR_RETS_FILE, "a");
+            fprintf(file, "%d, %d: address %d data %d\n", current_time, rqst->time, rqst->address, rqst->data);
+            fclose(file);
+
             //vpi_printf("%d: writing %x to %x\n", current_time, rqst->data, rqst->address);
             cache.lines[cache_line_number].data[offset] = rqst->data;
             cache.lines[cache_line_number].dirty = 1;
@@ -144,8 +157,7 @@ cache_wr_ret_t* cache_wr_ret(TIME current_time)
             rbtree_add(&rqst->address, rqst, cache_wr_miss_table);
             if(!mem_rd_rqst_pending(tag, cache_line_number))
             { 
-                vpi_printf("mem rqst made %d\n", current_time);
-                WORD start_address = (tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (cache_line_number << OFFSET_LOG2);
+                vpi_printf("mem rqst made %d %d\n", current_time, start_address);
                 mem_rd_rqst(start_address, current_time);
                 set_mem_rd_rqst_pending(tag, cache_line_number);
             }
@@ -162,7 +174,7 @@ void cache_update(TIME current_time)
     // move the cache misses back into valid request queue
     if(rd_ret != NULL)
     {
-        vpi_printf("rd_ret not null %d\n", current_time);
+        vpi_printf("rd_ret not null %d %d\n", current_time, rd_ret->start_address);
         BYTE cache_line_number = CACHELINE(rd_ret->start_address);
         BYTE tag = TAG(rd_ret->start_address);
 
@@ -171,20 +183,26 @@ void cache_update(TIME current_time)
         
         // find where to evict
         BYTE lru = evict_lru();
-        cache.lines[lru].tag = tag;
-        cache.lines[lru].valid = 1;
+        vpi_printf("LRU: %d %d\n", lru, rd_ret->start_address);
 
-        
         // flush lru to open up cache line for new memory
         if (cache.lines[lru].dirty==1)
         {
             WORD start_address = (cache.lines[lru].tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (lru << OFFSET_LOG2);
             mem_wr_rqst(cache.lines[lru].data, start_address, current_time);
         }
+
+        // update this. 
+        // we need to make sure we are thinking of this correctly
+        cache.lines[lru].tag = tag;
+        cache.lines[lru].valid = 1;
+        cache.lines[lru].dirty = 0;
         
         // put the rd_ret into cache.
-        memcpy(cache.lines[cache_line_number].data, rd_ret->data, NUM_CACHE_LINES * sizeof(WORD));
-        
+        memcpy(cache.lines[cache_line_number].data, rd_ret->data, WORDS_PER_CACHE_LINE * sizeof(WORD));
+        // we were doing this like a complete moron and it was overwriting valid and next
+        // memcpy(cache.lines[cache_line_number].data, rd_ret->data, NUM_CACHE_LINES * sizeof(WORD));
+
         WORD address = rd_ret->start_address;
         while(address < rd_ret->start_address+WORDS_PER_CACHE_LINE)
         {
@@ -218,7 +236,7 @@ void cache_update(TIME current_time)
 void dump_cache()
 {
     FILE *file;
-    file = fopen("cache", "w");
+    file = fopen(CACHE_FILE, "w");
     
     int i, j;
     for(i=0; i<NUM_CACHE_LINES; i++)
@@ -262,11 +280,20 @@ static void clear_mem_rd_rqst_pending(BYTE cache_line_number, BYTE tag)
 
 static BYTE evict_lru()
 {
+    int i;
+    for(i=0; i<NUM_CACHE_LINES;i++)
+    {
+        //vpi_printf("%d NEXT: %d %d %d\n", i, cache.lines[i].next, cache.lru, cache.mru);
+    }
     BYTE evicted = cache.lru;
     cache.lru = cache.lines[cache.lru].next;
     cache.lines[cache.mru].next = evicted;
     cache.mru = evicted;
     return evicted;
+    // this actually works
+    // return cache.lru++;
 }
 
-
+static void set_mru()
+{
+}

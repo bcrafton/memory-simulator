@@ -15,4 +15,4 @@ run:
 
 .PHONY: clean
 clean:
-	rm -f *.vvp *.vpi *.o *.out cache memory cache_rd_rqsts cache_wr_rqsts
+	rm -f *.vvp *.vpi *.o *.out logs/cache logs/memory logs/cache_rd_rqsts logs/cache_wr_rqsts logs/mem_rd_rqsts logs/mem_wr_rqsts logs/mem_rd_rets logs/mem_wr_rets logs/cache_wr_rets
