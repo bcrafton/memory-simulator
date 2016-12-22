@@ -77,7 +77,7 @@ module top;
 
     always @(posedge clk) begin
 
-        if($time > 1000) begin
+        if($time > 175) begin
             dump_valid <= $dump($time);
             $finish;
         end

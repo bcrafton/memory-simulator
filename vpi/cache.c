@@ -51,6 +51,7 @@ void cache_init()
 
 void cache_rd_rqst(WORD address, TIME current_time)
 {
+    assert(0);
     cache_rd_rqst_t* rqst = (cache_rd_rqst_t*) malloc(sizeof(cache_rd_rqst_t));
     rqst->address = address;
     rqst->time = current_time + CACHE_READ_TIME;
@@ -66,6 +67,10 @@ void cache_rd_rqst(WORD address, TIME current_time)
 void cache_wr_rqst(WORD address, WORD data, TIME current_time)
 {
     //vpi_printf("wr rqst made\n");
+    if(cache.lines[0].dirty==1)
+    {
+        vpi_printf("dirty bit is set\n");
+    }
     cache_wr_rqst_t* rqst = (cache_wr_rqst_t*) malloc(sizeof(cache_wr_rqst_t));
     rqst->address = address;
     rqst->data = data;
@@ -81,6 +86,7 @@ void cache_wr_rqst(WORD address, WORD data, TIME current_time)
 
 cache_rd_ret_t* cache_rd_ret(TIME current_time)
 {
+    assert(0);
     if(priority_list_empty(rd_rqst_queue))
     {
         return NULL;
@@ -156,8 +162,7 @@ cache_wr_ret_t* cache_wr_ret(TIME current_time)
         {
             rbtree_add(&rqst->address, rqst, cache_wr_miss_table);
             if(!mem_rd_rqst_pending(tag, cache_line_number))
-            { 
-                vpi_printf("mem rqst made %d %d\n", current_time, start_address);
+            {
                 mem_rd_rqst(start_address, current_time);
                 set_mem_rd_rqst_pending(tag, cache_line_number);
             }
@@ -183,11 +188,12 @@ void cache_update(TIME current_time)
         
         // find where to evict
         BYTE lru = evict_lru();
-        vpi_printf("LRU: %d %d\n", lru, rd_ret->start_address);
+        //vpi_printf("LRU: %d %d\n", lru, rd_ret->start_address);
 
         // flush lru to open up cache line for new memory
         if (cache.lines[lru].dirty==1)
         {
+            //vpi_printf("%d\n", cache.lines[lru].dirty);
             WORD start_address = (cache.lines[lru].tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (lru << OFFSET_LOG2);
             mem_wr_rqst(cache.lines[lru].data, start_address, current_time);
         }

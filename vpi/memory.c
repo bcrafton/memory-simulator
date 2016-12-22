@@ -33,6 +33,8 @@ void mem_init()
 
 void mem_rd_rqst(WORD start_address, TIME current_time)
 {
+    vpi_printf("mem rd rqst made %d %d\n", current_time, start_address);
+
     mem_rd_rqst_t* rqst = (mem_rd_rqst_t*) malloc(sizeof(mem_rd_rqst_t));
     rqst->start_address = start_address;
     rqst->time = current_time + MEMORY_READ_TIME;
@@ -47,7 +49,8 @@ void mem_rd_rqst(WORD start_address, TIME current_time)
 
 void mem_wr_rqst(WORD* data, WORD start_address, TIME current_time)
 {
-    //vpi_printf("mem wr rqst made\n");
+   vpi_printf("mem wr rqst made %d %d\n", current_time, start_address);
+
     mem_wr_rqst_t* rqst = (mem_wr_rqst_t*) malloc(sizeof(mem_wr_rqst_t));
     rqst->start_address = start_address;
     rqst->time = current_time + MEMORY_WRITE_TIME;
