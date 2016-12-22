@@ -69,16 +69,20 @@ void cache_wr_rqst(WORD address, WORD data, TIME current_time)
     //vpi_printf("wr rqst made\n");
     if(cache.lines[0].dirty==1)
     {
-        vpi_printf("dirty bit is set\n");
+        vpi_printf("dirty bit is set %d\n", current_time);
     }
     cache_wr_rqst_t* rqst = (cache_wr_rqst_t*) malloc(sizeof(cache_wr_rqst_t));
     rqst->address = address;
     rqst->data = data;
     rqst->time = current_time + CACHE_WRITE_TIME;
 
+
+    BYTE tag = TAG(rqst->address);
+    BYTE cache_line_number = CACHELINE(rqst->address);
+    BYTE offset = OFFSET(rqst->address);
     FILE *file;
     file = fopen(CACHE_WR_RQSTS_FILE, "a");
-    fprintf(file, "%d, %d: address %d data %d\n", current_time, rqst->time, address, data);
+    fprintf(file, "%d, %d: address %d data %d tag %d cache line # %d offset %d\n", current_time, rqst->time, address, data, tag, cache_line_number, offset);
     fclose(file);
 
     priority_list_push(&rqst->time, rqst, wr_rqst_queue);
@@ -97,6 +101,7 @@ cache_rd_ret_t* cache_rd_ret(TIME current_time)
     BYTE tag = TAG(rqst->address);
     BYTE cache_line_number = CACHELINE(rqst->address);
     BYTE offset = OFFSET(rqst->address);
+    WORD start_address = (tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (cache_line_number << OFFSET_LOG2);
 
     if(rqst->time <= current_time)
     {
@@ -114,9 +119,7 @@ cache_rd_ret_t* cache_rd_ret(TIME current_time)
         {
             rbtree_add(&rqst->address, rqst, cache_rd_miss_table);
             if(!mem_rd_rqst_pending(tag, cache_line_number))
-            { 
-                vpi_printf("mem rqst made %d\n", current_time);
-                WORD start_address = (tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (cache_line_number << OFFSET_LOG2);
+            {
                 mem_rd_rqst(start_address, current_time);
                 set_mem_rd_rqst_pending(tag, cache_line_number);
             }
@@ -150,7 +153,7 @@ cache_wr_ret_t* cache_wr_ret(TIME current_time)
             fprintf(file, "%d, %d: address %d data %d\n", current_time, rqst->time, rqst->address, rqst->data);
             fclose(file);
 
-            //vpi_printf("%d: writing %x to %x\n", current_time, rqst->data, rqst->address);
+            vpi_printf("%d: writing %x to %x\n", current_time, rqst->data, rqst->address);
             cache.lines[cache_line_number].data[offset] = rqst->data;
             cache.lines[cache_line_number].dirty = 1;
 
@@ -163,6 +166,7 @@ cache_wr_ret_t* cache_wr_ret(TIME current_time)
             rbtree_add(&rqst->address, rqst, cache_wr_miss_table);
             if(!mem_rd_rqst_pending(tag, cache_line_number))
             {
+                vpi_printf("mem rd rqst made %d %d %d %d\n", current_time, start_address, tag, cache_line_number);
                 mem_rd_rqst(start_address, current_time);
                 set_mem_rd_rqst_pending(tag, cache_line_number);
             }
