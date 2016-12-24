@@ -14,7 +14,7 @@ static void set_mem_rd_rqst_pending(BYTE cache_line_number, BYTE tag);
 static void clear_mem_rd_rqst_pending(BYTE cache_line_number, BYTE tag);
 static BYTE evict_lru(void);
 
-static short pending_mem_rd_rqsts[MEMORY_SIZE >> OFFSET_LOG2];
+static BYTE pending_mem_rd_rqsts[MEMORY_SIZE >> OFFSET_LOG2];
 
 void cache_init()
 {
@@ -163,10 +163,13 @@ cache_wr_ret_t* cache_wr_ret(TIME current_time)
         }
         else
         {
+            vpi_printf("time: %d address: %d tag: %d cl: %d pending: %u pending: %u index: %u\n", 
+            current_time, start_address, tag, cache_line_number, pending_mem_rd_rqsts[start_address>>OFFSET_LOG2], mem_rd_rqst_pending(tag, cache_line_number), start_address>>OFFSET_LOG2);
+
             rbtree_add(&rqst->address, rqst, cache_wr_miss_table);
             if(!mem_rd_rqst_pending(tag, cache_line_number))
             {
-                vpi_printf("mem rd rqst made %d %d %d %d\n", current_time, start_address, tag, cache_line_number);
+                vpi_printf("mem rd rqst made\n");
                 mem_rd_rqst(start_address, current_time);
                 set_mem_rd_rqst_pending(tag, cache_line_number);
             }
