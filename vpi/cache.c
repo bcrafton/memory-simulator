@@ -9,12 +9,14 @@ static RBTree* cache_rd_miss_table = NULL;
 static RBTree* cache_wr_miss_table = NULL;
 
 static BOOL in_cache(BYTE cache_line_number, BYTE tag);
-static BOOL mem_rd_rqst_pending(BYTE cache_line_number, BYTE tag);
-static void set_mem_rd_rqst_pending(BYTE cache_line_number, BYTE tag);
-static void clear_mem_rd_rqst_pending(BYTE cache_line_number, BYTE tag);
+static BOOL mem_rd_rqst_pending(BYTE tag, BYTE cache_line_number);
+static void set_mem_rd_rqst_pending(BYTE tag, BYTE cache_line_number);
+static void clear_mem_rd_rqst_pending(BYTE tag, BYTE cache_line_number);
 static BYTE evict_lru(void);
 
-static BYTE pending_mem_rd_rqsts[MEMORY_SIZE >> OFFSET_LOG2];
+static print_pending();
+
+static BYTE pending_mem_rd_rqsts[(MEMORY_SIZE >> OFFSET_LOG2)];
 
 void cache_init()
 {
@@ -69,7 +71,7 @@ void cache_wr_rqst(WORD address, WORD data, TIME current_time)
     //vpi_printf("wr rqst made\n");
     if(cache.lines[0].dirty==1)
     {
-        vpi_printf("dirty bit is set %d\n", current_time);
+        //vpi_printf("dirty bit is set %d\n", current_time);
     }
     cache_wr_rqst_t* rqst = (cache_wr_rqst_t*) malloc(sizeof(cache_wr_rqst_t));
     rqst->address = address;
@@ -153,7 +155,7 @@ cache_wr_ret_t* cache_wr_ret(TIME current_time)
             fprintf(file, "%d, %d: address %d data %d\n", current_time, rqst->time, rqst->address, rqst->data);
             fclose(file);
 
-            vpi_printf("%d: writing %x to %x\n", current_time, rqst->data, rqst->address);
+            vpi_printf("%d: writing %d to %d\n", current_time, rqst->data, rqst->address);
             cache.lines[cache_line_number].data[offset] = rqst->data;
             cache.lines[cache_line_number].dirty = 1;
 
@@ -163,12 +165,12 @@ cache_wr_ret_t* cache_wr_ret(TIME current_time)
         }
         else
         {
-            vpi_printf("time: %d address: %d tag: %d cl: %d pending: %u pending: %u index: %u\n", 
-            current_time, start_address, tag, cache_line_number, pending_mem_rd_rqsts[start_address>>OFFSET_LOG2], mem_rd_rqst_pending(tag, cache_line_number), start_address>>OFFSET_LOG2);
+            //vpi_printf("time: %d address: %d tag: %d cl: %d pending: %u pending: %u index: %u\n", current_time, start_address, tag, cache_line_number, pending_mem_rd_rqsts[(start_address>>OFFSET_LOG2)], mem_rd_rqst_pending(tag, cache_line_number), (start_address>>OFFSET_LOG2) );
 
             rbtree_add(&rqst->address, rqst, cache_wr_miss_table);
             if(!mem_rd_rqst_pending(tag, cache_line_number))
             {
+                //print_pending();
                 vpi_printf("mem rd rqst made\n");
                 mem_rd_rqst(start_address, current_time);
                 set_mem_rd_rqst_pending(tag, cache_line_number);
@@ -270,21 +272,22 @@ static BOOL in_cache(BYTE cache_line_number, BYTE tag)
     return ( (cache.lines[cache_line_number].tag == tag) && (cache.lines[cache_line_number].valid==1) );
 }
 
-static BOOL mem_rd_rqst_pending(BYTE cache_line_number, BYTE tag)
+static BOOL mem_rd_rqst_pending(BYTE tag, BYTE cache_line_number)
 {
     WORD start_address = (tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (cache_line_number << OFFSET_LOG2);
     unsigned int index = start_address >> OFFSET_LOG2;
     return pending_mem_rd_rqsts[index];
 }
 
-static void set_mem_rd_rqst_pending(BYTE cache_line_number, BYTE tag)
+static void set_mem_rd_rqst_pending(BYTE tag, BYTE cache_line_number)
 {
     WORD start_address = (tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (cache_line_number << OFFSET_LOG2);
     unsigned int index = start_address >> OFFSET_LOG2;
+    //printf("setting address: %u\n", index);
     pending_mem_rd_rqsts[index] = 1;
 }
 
-static void clear_mem_rd_rqst_pending(BYTE cache_line_number, BYTE tag)
+static void clear_mem_rd_rqst_pending(BYTE tag, BYTE cache_line_number)
 {
     WORD start_address = (tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (cache_line_number << OFFSET_LOG2);
     unsigned int index = start_address >> OFFSET_LOG2;
@@ -310,3 +313,19 @@ static BYTE evict_lru()
 static void set_mru()
 {
 }
+
+static print_pending()
+{
+    int i;
+    for(i=0; i<10; i++)
+    {
+        printf("%u | ", pending_mem_rd_rqsts[i]);
+    }
+    printf("\n");
+}
+
+
+
+
+
+
