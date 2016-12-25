@@ -53,7 +53,6 @@ void cache_init()
 
 void cache_rd_rqst(WORD address, TIME current_time)
 {
-    assert(0);
     cache_rd_rqst_t* rqst = (cache_rd_rqst_t*) malloc(sizeof(cache_rd_rqst_t));
     rqst->address = address;
     rqst->time = current_time + CACHE_READ_TIME;
@@ -68,6 +67,7 @@ void cache_rd_rqst(WORD address, TIME current_time)
 
 void cache_wr_rqst(WORD address, WORD data, TIME current_time)
 {
+    assert(0);
     //vpi_printf("wr rqst made\n");
     if(cache.lines[0].dirty==1)
     {
@@ -92,7 +92,6 @@ void cache_wr_rqst(WORD address, WORD data, TIME current_time)
 
 cache_rd_ret_t* cache_rd_ret(TIME current_time)
 {
-    assert(0);
     if(priority_list_empty(rd_rqst_queue))
     {
         return NULL;
@@ -132,6 +131,7 @@ cache_rd_ret_t* cache_rd_ret(TIME current_time)
 
 cache_wr_ret_t* cache_wr_ret(TIME current_time)
 {
+    assert(0);
     if(priority_list_empty(wr_rqst_queue))
     {
         return NULL;
@@ -193,6 +193,7 @@ void cache_update(TIME current_time)
         BYTE tag = TAG(rd_ret->start_address);
 
         // need to use the start address
+        assert(mem_rd_rqst_pending(tag, cache_line_number));
         clear_mem_rd_rqst_pending(tag, cache_line_number);
         
         // find where to evict
@@ -202,7 +203,7 @@ void cache_update(TIME current_time)
         // flush lru to open up cache line for new memory
         if (cache.lines[lru].dirty==1)
         {
-            //vpi_printf("%d\n", cache.lines[lru].dirty);
+            vpi_printf("evict\n", cache.lines[lru].dirty);
             WORD start_address = (cache.lines[lru].tag << (CACHELINE_LOG2 + OFFSET_LOG2)) | (lru << OFFSET_LOG2);
             mem_wr_rqst(cache.lines[lru].data, start_address, current_time);
         }

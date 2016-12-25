@@ -59,7 +59,7 @@ module top;
 
     always @(posedge clk) begin
 
-        if ($time > 256) begin
+        if ($time > 260) begin
             rd_en <= 0;
             wr_en <= 0;
         end else begin

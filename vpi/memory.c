@@ -13,7 +13,7 @@ void mem_init()
     int i;
     for(i=0; i<MEMORY_SIZE; i++)
     {
-        memory[i] = 0;
+        memory[i] = i;
     }
 
     FILE *file;
@@ -49,6 +49,7 @@ void mem_rd_rqst(WORD start_address, TIME current_time)
 
 void mem_wr_rqst(WORD* data, WORD start_address, TIME current_time)
 {
+    assert(0);
     vpi_printf("mem wr rqst made %d %d\n", current_time, start_address);
 
     mem_wr_rqst_t* rqst = (mem_wr_rqst_t*) malloc(sizeof(mem_wr_rqst_t));
