@@ -98,6 +98,7 @@ typedef struct cache_line{
     BOOL valid;
     BYTE tag;
     BYTE next;
+    BYTE prev;
     WORD data[WORDS_PER_CACHE_LINE];
 } cache_line_t;
 

@@ -13,6 +13,7 @@ static BOOL mem_rd_rqst_pending(BYTE tag, BYTE cache_line_number);
 static void set_mem_rd_rqst_pending(BYTE tag, BYTE cache_line_number);
 static void clear_mem_rd_rqst_pending(BYTE tag, BYTE cache_line_number);
 static BYTE evict_lru(void);
+static void set_mru(BYTE target);
 
 static print_pending();
 
@@ -35,8 +36,9 @@ void cache_init()
         cache.lines[i].dirty = 0;
         cache.lines[i].valid = 0;
         cache.lines[i].next = i+1;
+        cache.lines[i].prev = i-1;
     }
-    cache.lru = 0; 
+    cache.lru = 0;
     cache.mru = NUM_CACHE_LINES-1;
 
     FILE *file;
@@ -111,6 +113,8 @@ cache_rd_ret_t* cache_rd_ret(TIME current_time)
 
         if(in_cache(cache_line_number, tag))
         {
+            //set_mru(cache_line_number);
+
             cache_rd_ret_t* ret = (cache_rd_ret_t*) malloc(sizeof(cache_rd_ret_t));
             ret->address = rqst->address;
             ret->data = cache.lines[cache_line_number].data[offset];
@@ -150,6 +154,8 @@ cache_wr_ret_t* cache_wr_ret(TIME current_time)
         priority_list_pop(wr_rqst_queue);
         if(in_cache(cache_line_number, tag))
         {
+            //set_mru(cache_line_number);
+
             FILE *file;
             file = fopen(CACHE_WR_RETS_FILE, "a");
             fprintf(file, "%d, %d: address %d data %d\n", current_time, rqst->time, rqst->address, rqst->data);
@@ -303,16 +309,37 @@ static BYTE evict_lru()
         //vpi_printf("%d NEXT: %d %d %d\n", i, cache.lines[i].next, cache.lru, cache.mru);
     }
     BYTE evicted = cache.lru;
+
     cache.lru = cache.lines[cache.lru].next;
+    cache.lines[cache.lru].prev = -1;
+
     cache.lines[cache.mru].next = evicted;
+    cache.lines[evicted].prev = cache.mru;
+
     cache.mru = evicted;
+    cache.lines[cache.mru].next = -1;
+
     return evicted;
     // this actually works
     // return cache.lru++;
 }
 
-static void set_mru()
+static void set_mru(BYTE target)
 {
+    BYTE target_next;
+    BYTE target_prev;
+
+    target_next = cache.lines[target].next;
+    target_prev = cache.lines[target].prev;
+
+    cache.lines[target_prev].next = target_next;
+    cache.lines[target_next].prev = target_prev;
+    
+    cache.lines[cache.mru].next = target;
+    cache.lines[target].prev = cache.mru;
+    cache.lines[target].next = -1;
+
+    cache.mru = target;
 }
 
 static print_pending()

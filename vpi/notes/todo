@@ -31,4 +31,7 @@ and be able to change if it is dumb choice.
 ---------------------------------------------------------------------
 need only do what we are testing
 comment rest of calls out
+---------------------------------------------------------------------
+alright so time to make the set mru work when we need to move them around
+alright how is it done
 
